@@ -1,6 +1,6 @@
 import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
-import { describe, expect, it } from "vitest";
+import { beforeAll, describe, expect, it } from "vitest";
 import { book } from "../src/core/beancount/booking";
 import { directaImporter } from "../src/core/import/directa";
 import { mapMovimenti, provisionalInstrument } from "../src/core/import/mapping";
@@ -9,20 +9,28 @@ import type { InstrumentInfo } from "../src/core/model/movimento";
 const CSV_PATH = join(__dirname, "..", "Movimenti_G1473_12-6-2026.csv");
 
 describe.skipIf(!existsSync(CSV_PATH))("export Directa reale", () => {
-  const text = readFileSync(CSV_PATH, "latin1");
-  const parsed = directaImporter.parse({ name: "Movimenti_G1473.csv", text });
-
+  // Il corpo del describe viene comunque eseguito in fase di raccolta anche
+  // quando la suite è skippata. Lettura e parsing del CSV personale (gitignored,
+  // assente in CI) stanno quindi in beforeAll, che NON gira sulle suite skippate:
+  // altrimenti readFileSync/parse lancerebbero in raccolta e farebbero fallire la run.
+  let text: string;
+  let parsed: ReturnType<typeof directaImporter.parse>;
   // registro costruito al volo con l'euristica degli strumenti provvisori
   // (come fa l'app quando importa un CSV su un ledger vergine)
   const byKey = new Map<string, InstrumentInfo>();
-  for (const m of parsed.movimenti) {
-    if (!m.ticker || !m.isin || byKey.has(m.ticker)) continue;
-    const info = provisionalInstrument(m);
-    if (info) {
-      byKey.set(m.ticker, info);
-      byKey.set(m.isin, info);
+
+  beforeAll(() => {
+    text = readFileSync(CSV_PATH, "latin1");
+    parsed = directaImporter.parse({ name: "Movimenti_G1473.csv", text });
+    for (const m of parsed.movimenti) {
+      if (!m.ticker || !m.isin || byKey.has(m.ticker)) continue;
+      const info = provisionalInstrument(m);
+      if (info) {
+        byKey.set(m.ticker, info);
+        byKey.set(m.isin, info);
+      }
     }
-  }
+  });
 
   it("sniffa l'export reale", () => {
     expect(directaImporter.sniff({ name: "Movimenti_G1473_12-6-2026.csv", text })).toBe(true);
