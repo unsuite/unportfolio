@@ -114,6 +114,7 @@ export function App() {
 }
 
 function Onboarding({ restore }: { restore: RestoreResult | undefined }) {
+  const s = useApp();
   const [error, setError] = useState<string>();
   const [win, setWin] = useState(isWindows);
 
@@ -128,8 +129,20 @@ function Onboarding({ restore }: { restore: RestoreResult | undefined }) {
 
   async function regrant() {
     if (restore?.status !== "needs-permission") return;
-    const store = await requestPermission(restore.handle);
-    if (store) await openStore(store);
+    console.debug("[unportfolio:fs] regrant: richiesta permesso", restore.handle.name);
+    try {
+      const store = await requestPermission(restore.handle);
+      if (!store) {
+        console.warn("[unportfolio:fs] regrant: permesso non concesso");
+        setError("Permesso non concesso: riclicca e conferma nel popup del browser.");
+        return;
+      }
+      console.debug("[unportfolio:fs] regrant: permesso concesso, apro lo store");
+      await openStore(store);
+    } catch (e) {
+      console.error("[unportfolio:fs] regrant: errore", e);
+      setError(String(e));
+    }
   }
 
   async function demo() {
@@ -184,6 +197,11 @@ function Onboarding({ restore }: { restore: RestoreResult | undefined }) {
           </code>
         </div>
         {error && <p className="text-sm text-red-400">{error}</p>}
+        {s.notices.map((n, i) => (
+          <p key={i} className="text-sm text-amber-400">
+            {n}
+          </p>
+        ))}
         <p className="text-xs text-zinc-600">Richiede Chrome/Edge (File System Access API).</p>
       </div>
     </div>

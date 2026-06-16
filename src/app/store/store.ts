@@ -126,16 +126,27 @@ export async function openStore(store: DataStore): Promise<void> {
   emit({ busy: true });
   try {
     const files = await store.readAll();
+    console.debug(`[unportfolio:fs] openStore: ${files.size} file letti`, [...files.keys()]);
     if (files.size === 0) {
       // init skeleton
+      console.debug("[unportfolio:fs] openStore: cartella vuota, scrivo lo scheletro");
       for (const [path, text] of skeletonFiles()) {
         const lastModified = await store.write(path, text);
         files.set(path, { text, lastModified });
       }
     }
-    emit({ store, files, ...reparse(files), busy: false });
+    let parsed: Partial<AppState>;
+    try {
+      parsed = reparse(files);
+    } catch (e) {
+      console.error("[unportfolio:fs] openStore: errore nel parsing dei file", e);
+      throw new Error(`parsing dei file fallito: ${String(e)}`);
+    }
+    emit({ store, files, ...parsed, busy: false });
+    console.debug("[unportfolio:fs] openStore: store aperto");
     await reconcileAssetAccounts();
   } catch (e) {
+    console.error("[unportfolio:fs] openStore: errore", e);
     emit({ busy: false });
     notify(`errore apertura cartella: ${String(e)}`);
   }

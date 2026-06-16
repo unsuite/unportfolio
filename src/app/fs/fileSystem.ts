@@ -166,8 +166,12 @@ export type RestoreResult =
 /** Try to restore the persisted handle without a user gesture. */
 export async function restoreDirectory(): Promise<RestoreResult> {
   const handle = await idbGet<FileSystemDirectoryHandle>("dataDir");
-  if (!handle) return { status: "none" };
+  if (!handle) {
+    console.debug("[unportfolio:fs] restore: nessun handle in IndexedDB");
+    return { status: "none" };
+  }
   const perm = await handle.queryPermission({ mode: "readwrite" });
+  console.debug(`[unportfolio:fs] restore: handle "${handle.name}", permesso=${perm}`);
   if (perm === "granted")
     return {
       status: "ok",
@@ -181,6 +185,7 @@ export async function requestPermission(
   handle: FileSystemDirectoryHandle,
 ): Promise<DataStore | undefined> {
   const perm = await handle.requestPermission({ mode: "readwrite" });
+  console.debug(`[unportfolio:fs] requestPermission: esito=${perm}`);
   if (perm !== "granted") return undefined;
   return new DataStore("fsa", handle, await opfsBackupDir());
 }
