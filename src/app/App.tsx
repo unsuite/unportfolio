@@ -68,7 +68,7 @@ export function App() {
 
   return (
     <div className="min-h-screen bg-zinc-950 text-zinc-100">
-      <header className="border-b border-zinc-800 bg-zinc-900/60 px-6 py-3">
+      <header className="sticky top-0 z-30 border-b border-zinc-800 bg-zinc-900/90 px-6 py-3 backdrop-blur">
         <div className="flex items-center gap-6">
           <h1 className="text-lg font-bold tracking-tight">unportfolio</h1>
           <nav className="flex gap-1">

@@ -19,6 +19,7 @@ import { gainColor, holdingLabel, NameEditor, TaxEditInline } from "./AssetDetai
 import { ContoForm } from "./ContoForm";
 import { AllocationBars, type GroupStats, LineChart } from "./charts";
 import { Modal } from "./Modal";
+import { ManualSnapshotEditor, SnapshotForm } from "./SnapshotForm";
 
 type GroupBy = "globale" | "assetclass" | "tracciamento" | "owner" | "portfolio";
 
@@ -247,6 +248,7 @@ function PatrimonioMisto({
   const [editing, setEditing] = useState<
     { kind: "edit"; conto: PatrimonioAccount } | { kind: "new" }
   >();
+  const [snapEditing, setSnapEditing] = useState(false);
 
   // AssetRow per commodity, ricalcolati alla posizione selezionata (`when`):
   // in live = quelli già derivati; a una data passata ri-book le sole
@@ -380,84 +382,102 @@ function PatrimonioMisto({
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-wrap items-center gap-3">
-        <DateSelect value={when} onChange={setWhen} dates={st.dates} label="al" />
-        <label className="flex items-center gap-1.5 text-sm">
-          <span className="text-zinc-400">Δ vs</span>
-          <select
-            value={baseline}
-            onChange={(e) => setBaseline(e.target.value as IsoDate | "prev")}
-            className="rounded border border-zinc-700 bg-zinc-900 px-2 py-1 text-sm"
-          >
-            <option value="prev">precedente{prev ? ` (${prev})` : ""}</option>
-            {[...st.dates].reverse().map((d) => (
-              <option key={d} value={d}>
-                {d}
-              </option>
-            ))}
-          </select>
-        </label>
-        <label className="flex items-center gap-1.5 text-sm">
-          <span className="text-zinc-400">vista</span>
-          <select
-            value={groupBy}
-            onChange={(e) => setGroupBy(e.target.value as GroupBy)}
-            className="rounded border border-zinc-700 bg-zinc-900 px-2 py-1 text-sm"
-          >
-            <option value="globale">globale</option>
-            <option value="assetclass">per asset class</option>
-            <option value="tracciamento">per tracciamento</option>
-            <option value="owner">per owner</option>
-            <option value="portfolio">per portfolio</option>
-          </select>
-        </label>
-        {selected.size > 0 && (
-          <div className="flex items-center gap-1">
-            <button
-              onClick={() => setComparing(true)}
-              disabled={selected.size < 2}
-              className="rounded bg-emerald-700 px-2.5 py-1 text-xs hover:bg-emerald-600 disabled:opacity-50"
+      <div className="sticky top-[52px] z-20 -mx-6 space-y-3 border-b border-zinc-800/60 bg-zinc-950/95 px-6 py-2 backdrop-blur">
+        <div className="flex flex-wrap items-center gap-3">
+          <DateSelect value={when} onChange={setWhen} dates={st.dates} label="al" />
+          <label className="flex items-center gap-1.5 text-sm">
+            <span className="text-zinc-400">Δ vs</span>
+            <select
+              value={baseline}
+              onChange={(e) => setBaseline(e.target.value as IsoDate | "prev")}
+              className="rounded border border-zinc-700 bg-zinc-900 px-2 py-1 text-sm"
             >
-              Confronta ({selected.size})
+              <option value="prev">precedente{prev ? ` (${prev})` : ""}</option>
+              {[...st.dates].reverse().map((d) => (
+                <option key={d} value={d}>
+                  {d}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label className="flex items-center gap-1.5 text-sm">
+            <span className="text-zinc-400">vista</span>
+            <select
+              value={groupBy}
+              onChange={(e) => setGroupBy(e.target.value as GroupBy)}
+              className="rounded border border-zinc-700 bg-zinc-900 px-2 py-1 text-sm"
+            >
+              <option value="globale">globale</option>
+              <option value="assetclass">per asset class</option>
+              <option value="tracciamento">per tracciamento</option>
+              <option value="owner">per owner</option>
+              <option value="portfolio">per portfolio</option>
+            </select>
+          </label>
+          {selected.size > 0 && (
+            <div className="flex items-center gap-1">
+              <button
+                onClick={() => setComparing(true)}
+                disabled={selected.size < 2}
+                className="rounded bg-emerald-700 px-2.5 py-1 text-xs hover:bg-emerald-600 disabled:opacity-50"
+              >
+                Confronta ({selected.size})
+              </button>
+              <button
+                onClick={() => setSelected(new Set())}
+                title="Svuota selezione"
+                className="rounded px-1.5 py-1 text-xs text-zinc-500 hover:bg-zinc-800 hover:text-zinc-300"
+              >
+                ✕
+              </button>
+            </div>
+          )}
+          <span className="ml-auto text-sm tabular-nums text-zinc-400">
+            {when === "live" ? "net worth" : `al ${when}`}{" "}
+            {fmtEur(when === "live" ? st.liveTotal : st.totals.get(when))}
+          </span>
+        </div>
+
+        <div className="flex h-6 w-full overflow-hidden rounded">
+          {groups
+            .filter((g) => g.total.gt(0))
+            .map((g, i) => {
+              const w = positiveTotal.gt(0) ? g.total.div(positiveTotal).toNumber() * 100 : 0;
+              return (
+                <div
+                  key={g.key}
+                  style={{ width: `${w}%`, background: COLORS[i % COLORS.length] }}
+                  title={`${g.key}: ${fmtEur(g.total)}`}
+                />
+              );
+            })}
+        </div>
+
+        <div className="flex items-center justify-between">
+          <div className="flex gap-2">
+            <button
+              onClick={() => setEditing({ kind: "new" })}
+              className="flex items-center gap-1.5 rounded bg-zinc-800 px-3 py-1.5 text-xs font-medium text-zinc-200 hover:bg-zinc-700"
+            >
+              <Plus size={14} /> Nuovo conto
             </button>
             <button
-              onClick={() => setSelected(new Set())}
-              title="Svuota selezione"
-              className="rounded px-1.5 py-1 text-xs text-zinc-500 hover:bg-zinc-800 hover:text-zinc-300"
+              onClick={() => setSnapEditing(true)}
+              className="flex items-center gap-1.5 rounded bg-emerald-700 px-3 py-1.5 text-xs font-medium text-white hover:bg-emerald-600"
             >
-              ✕
+              <Plus size={14} /> Nuovo snapshot
             </button>
           </div>
-        )}
-        <span className="ml-auto text-sm tabular-nums text-zinc-400">
-          {when === "live" ? "net worth" : `al ${when}`}{" "}
-          {fmtEur(when === "live" ? st.liveTotal : st.totals.get(when))}
-        </span>
-      </div>
-
-      <div className="flex h-6 w-full overflow-hidden rounded">
-        {groups
-          .filter((g) => g.total.gt(0))
-          .map((g, i) => {
-            const w = positiveTotal.gt(0) ? g.total.div(positiveTotal).toNumber() * 100 : 0;
-            return (
-              <div
-                key={g.key}
-                style={{ width: `${w}%`, background: COLORS[i % COLORS.length] }}
-                title={`${g.key}: ${fmtEur(g.total)}`}
-              />
-            );
-          })}
-      </div>
-
-      <div className="flex justify-end">
-        <button
-          onClick={() => setCollapsed(allCollapsed ? new Set() : new Set(groups.map((g) => g.key)))}
-          title={allCollapsed ? "Espandi tutto" : "Comprimi tutto"}
-          className="rounded p-1 text-zinc-500 hover:bg-zinc-800 hover:text-zinc-300"
-        >
-          {allCollapsed ? <ChevronsUpDown size={16} /> : <ChevronsDownUp size={16} />}
-        </button>
+          <button
+            onClick={() =>
+              setCollapsed(allCollapsed ? new Set() : new Set(groups.map((g) => g.key)))
+            }
+            title={allCollapsed ? "Espandi tutto" : "Comprimi tutto"}
+            className="rounded p-1 text-zinc-500 hover:bg-zinc-800 hover:text-zinc-300"
+          >
+            {allCollapsed ? <ChevronsUpDown size={16} /> : <ChevronsDownUp size={16} />}
+          </button>
+        </div>
       </div>
 
       <div className="space-y-2">
@@ -571,36 +591,58 @@ function PatrimonioMisto({
                             <Fragment key={r.account.id}>
                               <tr
                                 onClick={() => setExpanded(isOpen ? undefined : r.account.id)}
-                                className={`cursor-pointer border-t border-zinc-800/60 hover:bg-zinc-900 [&>td]:px-3 [&>td]:py-1.5 ${r.account.inNetWorth ? "" : "opacity-50"}`}
+                                className={`group cursor-pointer border-t border-zinc-800/60 hover:bg-zinc-900 [&>td]:px-3 [&>td]:py-1.5 ${r.account.inNetWorth ? "" : "opacity-50"}`}
                               >
                                 <td className="pl-6">
-                                  {asset && (
-                                    <input
-                                      type="checkbox"
-                                      checked={selected.has(asset.commodity)}
-                                      onClick={(e) => e.stopPropagation()}
-                                      onChange={() => toggleSelected(asset.commodity)}
-                                      title="Seleziona per il confronto"
-                                      className="mr-2 align-middle accent-zinc-400"
-                                    />
-                                  )}
-                                  {asset ? (
-                                    <>
-                                      <span className="font-medium">{r.account.nome}</span>
-                                      <span className="ml-2 text-xs text-zinc-500">
-                                        {asset.name}
+                                  <span className="inline-flex items-center gap-2">
+                                    {asset ? (
+                                      <span>
+                                        <span className="font-medium">{r.account.nome}</span>
+                                        <span className="ml-2 text-xs text-zinc-500">
+                                          {asset.name}
+                                        </span>
                                       </span>
-                                    </>
-                                  ) : (
-                                    <>
-                                      {r.account.nome}
-                                      <span className="ml-2 text-xs text-zinc-600">
-                                        {groupBy === "owner"
-                                          ? (r.account.portfolio ?? "")
-                                          : r.account.owner}
+                                    ) : (
+                                      <span>
+                                        {r.account.nome}
+                                        <span className="ml-2 text-xs text-zinc-600">
+                                          {groupBy === "owner"
+                                            ? (r.account.portfolio ?? "")
+                                            : r.account.owner}
+                                        </span>
                                       </span>
-                                    </>
-                                  )}
+                                    )}
+                                    {asset &&
+                                      (() => {
+                                        const inCompare = selected.has(asset.commodity);
+                                        return (
+                                          <button
+                                            onClick={(e) => {
+                                              e.stopPropagation();
+                                              toggleSelected(asset.commodity);
+                                            }}
+                                            title="Confronto"
+                                            className={`rounded px-1.5 py-0.5 text-xs transition-opacity ${
+                                              inCompare
+                                                ? "bg-emerald-700 text-white hover:bg-emerald-600"
+                                                : "bg-zinc-800 text-zinc-300 opacity-0 hover:bg-zinc-700 focus:opacity-100 group-hover:opacity-100"
+                                            }`}
+                                          >
+                                            {inCompare ? "Nel compare ✓" : "Aggiungi al compare"}
+                                          </button>
+                                        );
+                                      })()}
+                                    <button
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        setEditing({ kind: "edit", conto: r.account });
+                                      }}
+                                      title="Modifica conto"
+                                      className="rounded px-1 text-zinc-500 opacity-0 transition-opacity hover:bg-zinc-800 hover:text-zinc-300 focus:opacity-100 group-hover:opacity-100"
+                                    >
+                                      ✎
+                                    </button>
+                                  </span>
                                 </td>
                                 <td className="text-right tabular-nums">{fmtEur(v)}</td>
                                 <td className="w-24 text-right text-xs tabular-nums">
@@ -620,22 +662,28 @@ function PatrimonioMisto({
                                 <td className="w-24 text-right">
                                   <Sparkline values={rowSeries(r, st.dates)} />
                                 </td>
-                                <td className="w-8 text-right">
-                                  <button
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      setEditing({ kind: "edit", conto: r.account });
-                                    }}
-                                    title="Modifica conto"
-                                    className="rounded px-1 text-zinc-600 hover:bg-zinc-800 hover:text-zinc-300"
-                                  >
-                                    ✎
-                                  </button>
-                                </td>
                               </tr>
                               {isOpen && (
                                 <tr className="bg-zinc-950">
-                                  <td colSpan={5} className="px-8 py-3">
+                                  <td colSpan={4} className="px-8 py-3">
+                                    {(() => {
+                                      const full = deriveValueSeries({
+                                        // forza inNetWorth: la serie del singolo conto va
+                                        // mostrata anche per i conti esclusi dal net worth
+                                        accounts: [{ ...r.account, inNetWorth: true }],
+                                        snapshots: s.snapshots,
+                                        directives: allDirectives(s),
+                                        prices,
+                                        asOf,
+                                      }).global;
+                                      const points =
+                                        when === "live" ? full : full.filter((p) => p.date <= when);
+                                      return points.length >= 2 ? (
+                                        <div className="mb-3 border-b border-zinc-800/60 pb-3">
+                                          <LineChart points={points} />
+                                        </div>
+                                      ) : null;
+                                    })()}
                                     {asset && (
                                       <div className="mb-3">
                                         {asset.units.isZero() ? (
@@ -850,13 +898,20 @@ function PatrimonioMisto({
                                         </span>
                                       </div>
                                     )}
-                                    <div className="flex flex-wrap gap-x-6 gap-y-1 text-xs text-zinc-400">
-                                      {st.dates.map((d) => (
-                                        <span key={d} className="tabular-nums">
-                                          <span className="text-zinc-600">{d}</span>{" "}
-                                          {fmtEur(r.values.get(d))}
-                                        </span>
-                                      ))}
+                                    <div className="flex flex-wrap items-center gap-x-6 gap-y-1 text-xs text-zinc-400">
+                                      {asset ? (
+                                        st.dates.map((d) => (
+                                          <span key={d} className="tabular-nums">
+                                            <span className="text-zinc-600">{d}</span>{" "}
+                                            {fmtEur(r.values.get(d))}
+                                          </span>
+                                        ))
+                                      ) : (
+                                        <ManualSnapshotEditor
+                                          account={r.account}
+                                          snapshots={s.snapshots}
+                                        />
+                                      )}
                                       <span className="tabular-nums">
                                         <span className="text-zinc-600">Live</span> {fmtEur(r.live)}
                                       </span>
@@ -907,12 +962,6 @@ function PatrimonioMisto({
             </section>
           );
         })}
-        <button
-          onClick={() => setEditing({ kind: "new" })}
-          className="flex w-full items-center justify-center gap-1.5 rounded border border-dashed border-zinc-700 py-2 text-xs text-zinc-500 hover:border-zinc-600 hover:text-zinc-300"
-        >
-          <Plus size={14} /> Nuovo conto
-        </button>
       </div>
 
       {editing && (
@@ -921,6 +970,16 @@ function PatrimonioMisto({
             conto={editing.kind === "edit" ? editing.conto : undefined}
             portfolios={portfolios}
             onClose={() => setEditing(undefined)}
+          />
+        </Modal>
+      )}
+
+      {snapEditing && (
+        <Modal onClose={() => setSnapEditing(false)}>
+          <SnapshotForm
+            accounts={s.accounts.filter((a) => !a.commodity)}
+            snapshots={s.snapshots}
+            onClose={() => setSnapEditing(false)}
           />
         </Modal>
       )}

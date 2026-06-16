@@ -1,5 +1,5 @@
 import type { Decimal } from "decimal.js";
-import type { Directive, LedgerFile } from "../../core/beancount/ast";
+import type { Directive, IsoDate, LedgerFile } from "../../core/beancount/ast";
 import { parse } from "../../core/beancount/parser";
 import { formatDirective, serialize } from "../../core/beancount/serializer";
 import {
@@ -227,6 +227,13 @@ export async function addSnapshotEntries(entries: SnapshotEntry[]): Promise<bool
   const merged = new Map<string, SnapshotEntry>();
   for (const e of [...state.snapshots, ...entries]) merged.set(`${e.date}|${e.accountId}`, e);
   return writeFile("snapshots.csv", serializeSnapshots([...merged.values()]));
+}
+
+/** Elimina lo snapshot di un conto a una certa data (snapshots.csv). */
+export async function removeSnapshotEntry(accountId: string, date: IsoDate): Promise<boolean> {
+  const next = state.snapshots.filter((e) => !(e.accountId === accountId && e.date === date));
+  if (next.length === state.snapshots.length) return false;
+  return writeFile("snapshots.csv", serializeSnapshots(next));
 }
 
 export function setQuotes(quotes: Map<string, Decimal>): void {
