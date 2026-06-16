@@ -32,6 +32,13 @@ const TABS = [
 
 type Tab = (typeof TABS)[number][0];
 
+/** Rileva se l'utente è probabilmente su Windows, per suggerire il comando giusto. */
+function isWindows(): boolean {
+  const nav = navigator as Navigator & { userAgentData?: { platform?: string } };
+  const platform = nav.userAgentData?.platform ?? navigator.platform ?? navigator.userAgent;
+  return /win/i.test(platform);
+}
+
 export function App() {
   const s = useApp();
   const [tab, setTab] = useState<Tab>("patrimonio");
@@ -108,6 +115,7 @@ export function App() {
 
 function Onboarding({ restore }: { restore: RestoreResult | undefined }) {
   const [error, setError] = useState<string>();
+  const [win, setWin] = useState(isWindows);
 
   async function pick() {
     try {
@@ -157,12 +165,22 @@ function Onboarding({ restore }: { restore: RestoreResult | undefined }) {
           Prova senza cartella (demo nel browser)
         </button>
         <div className="border-t border-zinc-800 pt-3">
-          <p className="mb-1 text-xs text-zinc-500">
-            Prima volta? Questo comando crea la cartella dati già configurata (poi selezionala qui
-            sopra — il click è richiesto dal browser):
-          </p>
+          <div className="mb-1 flex items-baseline justify-between gap-2">
+            <p className="text-xs text-zinc-500">
+              Prima volta? Questo comando crea la cartella dati già configurata (poi selezionala qui
+              sopra — il click è richiesto dal browser):
+            </p>
+            <button
+              onClick={() => setWin((w) => !w)}
+              className="shrink-0 text-xs text-zinc-500 underline hover:text-zinc-300"
+            >
+              {win ? "macOS / Linux" : "Windows"}
+            </button>
+          </div>
           <code className="block overflow-x-auto rounded border border-zinc-800 bg-zinc-950 px-2 py-1.5 text-xs whitespace-nowrap text-zinc-400 select-all">
-            {`curl -fsSL ${window.location.origin}/init.sh | sh -s -- ~/Documents/unportfolio-data`}
+            {win
+              ? `irm ${window.location.origin}/init.ps1 | iex`
+              : `curl -fsSL ${window.location.origin}/init.sh | sh -s -- ~/Documents/unportfolio-data`}
           </code>
         </div>
         {error && <p className="text-sm text-red-400">{error}</p>}
