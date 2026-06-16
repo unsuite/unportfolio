@@ -1,0 +1,136 @@
+import { Decimal } from "decimal.js";
+import type { Directive, IsoDate, TransactionDirective } from "../beancount/ast";
+import type { PatrimonioAccount, Sezione, SnapshotEntry } from "../model/config";
+import { type PriceTable, priceAt } from "./prices";
+
+/**
+ * Net worth statement: one row per patrimonio.toml entry, one value column per
+ * snapshot date plus "live". Manual accounts read snapshots.csv; ledger-backed
+ * accounts (with `commodity`) compute units(date) × price(≤date).
+ */
+
+export interface PatrimonioRow {
+  account: PatrimonioAccount;
+  /** snapshot date → value (undefined = no data) */
+  values: Map<IsoDate, Decimal | undefined>;
+  live?: Decimal;
+}
+
+export interface PatrimonioStatement {
+  dates: IsoDate[];
+  rows: PatrimonioRow[];
+  /** totals per snapshot over inNetWorth rows */
+  totals: Map<IsoDate, Decimal>;
+  liveTotal: Decimal;
+  sections: Map<Sezione, PatrimonioRow[]>;
+}
+
+const ZERO = new Decimal(0);
+
+/** units of a commodity held across all accounts at end of `date`. */
+export function unitsAt(
+  transactions: TransactionDirective[],
+  commodity: string,
+  date: IsoDate,
+): Decimal {
+  let units = ZERO;
+  for (const t of transactions) {
+    if (t.date > date) continue;
+    for (const p of t.postings) {
+      if (p.amount && p.cost !== undefined && p.amount.currency === commodity)
+        units = units.add(p.amount.number);
+    }
+  }
+  return units;
+}
+
+export interface DerivePatrimonioInput {
+  accounts: PatrimonioAccount[];
+  snapshots: SnapshotEntry[];
+  directives: Directive[];
+  prices: PriceTable;
+  liveQuotes?: Map<string, Decimal>;
+  asOf: IsoDate;
+}
+
+export function derivePatrimonio(input: DerivePatrimonioInput): PatrimonioStatement {
+  const dates = [...new Set(input.snapshots.map((s) => s.date))].sort();
+  const manual = new Map<string, Decimal>(); // `${date}|${accountId}`
+  for (const s of input.snapshots) manual.set(`${s.date}|${s.accountId}`, new Decimal(s.value));
+
+  const transactions = input.directives.filter(
+    (d): d is TransactionDirective => d.kind === "transaction",
+  );
+
+  const rows: PatrimonioRow[] = input.accounts.map((account) => {
+    const values = new Map<IsoDate, Decimal | undefined>();
+    let live: Decimal | undefined;
+    if (account.commodity) {
+      for (const date of dates) {
+        const units = unitsAt(transactions, account.commodity, date);
+        const pp = priceAt(input.prices, account.commodity, date);
+        values.set(date, pp ? units.mul(pp.price) : undefined);
+      }
+      const unitsNow = unitsAt(transactions, account.commodity, input.asOf);
+      const liveQuote =
+        input.liveQuotes?.get(account.commodity) ??
+        priceAt(input.prices, account.commodity, input.asOf)?.price;
+      if (liveQuote !== undefined) live = unitsNow.mul(liveQuote);
+    } else {
+      for (const date of dates) values.set(date, manual.get(`${date}|${account.id}`));
+      // live for manual accounts = most recent snapshot
+      for (let i = dates.length - 1; i >= 0; i--) {
+        const v = values.get(dates[i]!);
+        if (v !== undefined) {
+          live = v;
+          break;
+        }
+      }
+    }
+    const row: PatrimonioRow = { account, values };
+    if (live !== undefined) row.live = live;
+    return row;
+  });
+
+  const totals = new Map<IsoDate, Decimal>();
+  for (const date of dates) {
+    let sum = ZERO;
+    for (const r of rows) {
+      if (!r.account.inNetWorth) continue;
+      const v = r.values.get(date);
+      if (v !== undefined) sum = sum.add(v);
+    }
+    totals.set(date, sum);
+  }
+  let liveTotal = ZERO;
+  for (const r of rows)
+    if (r.account.inNetWorth && r.live !== undefined) liveTotal = liveTotal.add(r.live);
+
+  const sections = new Map<Sezione, PatrimonioRow[]>();
+  for (const r of rows) {
+    let list = sections.get(r.account.sezione);
+    if (!list) {
+      list = [];
+      sections.set(r.account.sezione, list);
+    }
+    list.push(r);
+  }
+
+  return { dates, rows, totals, liveTotal, sections };
+}
+
+/** current value per portfolio at a given snapshot (or live), for Goal Status. */
+export function portfolioCurrents(
+  statement: PatrimonioStatement,
+  at: IsoDate | "live",
+): Map<string, Decimal> {
+  const out = new Map<string, Decimal>();
+  for (const r of statement.rows) {
+    const portfolio = r.account.portfolio;
+    if (!portfolio || !r.account.inNetWorth) continue;
+    const v = at === "live" ? r.live : r.values.get(at);
+    if (v === undefined) continue;
+    out.set(portfolio, (out.get(portfolio) ?? ZERO).add(v));
+  }
+  return out;
+}
