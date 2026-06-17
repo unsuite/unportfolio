@@ -1,7 +1,7 @@
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { book } from "../src/core/beancount/booking";
+import { book, holdingKey } from "../src/core/beancount/booking";
 import { directaImporter } from "../src/core/import/directa";
 import { mapMovimenti, provisionalInstrument } from "../src/core/import/mapping";
 import type { InstrumentInfo } from "../src/core/model/movimento";
@@ -76,7 +76,9 @@ describe("export Directa (fixture dummy)", () => {
     expect(cash.toNumber()).toBeCloseTo(sum, 2);
     expect(cash.toFixed(2)).toBe("5092.70");
     // posizioni (commodity = ISIN): BTP aperto, ETF chiuso dopo la vendita
-    expect(booked.positions.get("IT0001234567")!.units.toNumber()).toBeGreaterThan(0);
-    expect(booked.positions.get("IE00BK5BQT80")!.units.toNumber()).toBe(0);
+    expect(
+      booked.positions.get(holdingKey("Directa", "IT0001234567"))!.units.toNumber(),
+    ).toBeGreaterThan(0);
+    expect(booked.positions.get(holdingKey("Directa", "IE00BK5BQT80"))!.units.toNumber()).toBe(0);
   });
 });

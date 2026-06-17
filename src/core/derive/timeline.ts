@@ -1,9 +1,9 @@
 import { Decimal } from "decimal.js";
 import type { Directive, IsoDate, TransactionDirective } from "../beancount/ast";
-import type { InstrumentPosition } from "../beancount/booking";
+import { findPosition, type InstrumentPosition } from "../beancount/booking";
 import { xirr } from "../math/xirr";
 import type { PatrimonioAccount, SnapshotEntry } from "../model/config";
-import { unitsAt } from "./patrimonio";
+import { depositoPrefix, unitsAt } from "./patrimonio";
 import { type PriceTable, priceAt } from "./prices";
 
 /**
@@ -58,7 +58,7 @@ function accountValueAt(
   prices: PriceTable,
 ): Decimal | undefined {
   if (account.commodity) {
-    const units = unitsAt(transactions, account.commodity, date);
+    const units = unitsAt(transactions, account.commodity, date, depositoPrefix(account.deposito));
     if (units.isZero()) return ZERO;
     const p = priceAt(prices, account.commodity, date);
     return p ? units.mul(p.price) : undefined;
@@ -182,16 +182,29 @@ export interface GroupStats {
  * l'investito). MWRR: tutti i flussi di cassa dei membri + valore finale.
  * TWRR: confini all'unione degli eventi-quote, V di gruppo = Σ qty×prezzo.
  */
+export interface GroupHolding {
+  commodity: string;
+  /** segmento di deposito; assente = aggrega su tutti gli account (compat) */
+  deposito?: string;
+}
+
 export function deriveGroupStats(
-  commodities: string[],
+  holdings: GroupHolding[],
   positions: Map<string, InstrumentPosition>,
   directives: Directive[],
   prices: PriceTable,
   asOf: IsoDate,
 ): GroupStats | undefined {
-  const members = commodities
-    .map((c) => ({ commodity: c, pos: positions.get(c) }))
-    .filter((m): m is { commodity: string; pos: InstrumentPosition } => !!m.pos);
+  const members = holdings
+    .map((h) => ({
+      commodity: h.commodity,
+      prefix: depositoPrefix(h.deposito),
+      pos: findPosition(positions, h.deposito, h.commodity),
+    }))
+    .filter(
+      (m): m is { commodity: string; prefix: string | undefined; pos: InstrumentPosition } =>
+        !!m.pos,
+    );
   if (members.length === 0) return undefined;
 
   const transactions = directives.filter(
@@ -201,7 +214,7 @@ export function deriveGroupStats(
   const groupValueAt = (date: IsoDate): Decimal | undefined => {
     let total = ZERO;
     for (const m of members) {
-      const units = unitsAt(transactions, m.commodity, date);
+      const units = unitsAt(transactions, m.commodity, date, m.prefix);
       if (units.isZero()) continue;
       const p = priceAt(prices, m.commodity, date);
       if (!p) return undefined;

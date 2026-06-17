@@ -48,6 +48,8 @@ function commodityInfoFrom(d: CommodityDirective): CommodityInfo {
 
 export interface AssetRow {
   commodity: string;
+  /** segmento di deposito della posizione (`Assets:Broker:<deposito>:…`) */
+  deposito: string;
   name: string;
   isin?: string;
   /** ticker di sola visualizzazione (metadato commodity); il commodity è l'ISIN */
@@ -106,7 +108,8 @@ export interface DeriveAssetsInput {
 
 export function deriveAssets(input: DeriveAssetsInput): AssetRow[] {
   const rows: AssetRow[] = [];
-  for (const [commodity, pos] of input.positions) {
+  for (const pos of input.positions.values()) {
+    const commodity = pos.commodity;
     const info = input.commodities.get(commodity);
     const live = input.liveQuotes?.get(commodity);
     // valutazione as-of: ultimo prezzo campionato ≤ asOf (non l'ultimo in
@@ -117,6 +120,7 @@ export function deriveAssets(input: DeriveAssetsInput): AssetRow[] {
 
     const row: AssetRow = {
       commodity,
+      deposito: pos.deposito,
       name: info?.name ?? commodity,
       assetClass: info?.assetClass ?? "ETF",
       taxRate: info?.taxRate ?? 0.26,
@@ -216,6 +220,8 @@ export function deriveAssets(input: DeriveAssetsInput): AssetRow[] {
 
     rows.push(row);
   }
-  rows.sort((a, b) => a.commodity.localeCompare(b.commodity));
+  rows.sort(
+    (a, b) => a.commodity.localeCompare(b.commodity) || a.deposito.localeCompare(b.deposito),
+  );
   return rows;
 }

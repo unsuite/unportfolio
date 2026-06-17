@@ -2,8 +2,9 @@ import { Decimal } from "decimal.js";
 import { ChevronsDownUp, ChevronsUpDown, Plus } from "lucide-react";
 import { Fragment, useMemo, useState } from "react";
 import type { IsoDate } from "../../core/beancount/ast";
-import { book } from "../../core/beancount/booking";
+import { book, holdingKey } from "../../core/beancount/booking";
 import { type AssetRow, type CommodityInfo, deriveAssets } from "../../core/derive/assets";
+import { deriveBolloTitoli } from "../../core/derive/bollo";
 import { deriveManualReturn } from "../../core/derive/manualReturn";
 import type { PatrimonioRow, PatrimonioStatement } from "../../core/derive/patrimonio";
 import type { PriceTable } from "../../core/derive/prices";
@@ -265,16 +266,25 @@ function PatrimonioMisto({
             prices,
             asOf: when,
           });
-    return new Map(rows.map((a) => [a.commodity, a]));
+    return new Map(rows.map((a) => [holdingKey(a.deposito, a.commodity), a]));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [when, s.version]);
+
+  // AssetRow di un conto ledger-backed: match esatto per (deposito, commodity);
+  // se il conto non ha ancora un deposito assegnato, ripiega sulla commodity.
+  const assetFor = (account: PatrimonioAccount): AssetRow | undefined => {
+    if (!account.commodity) return undefined;
+    if (account.deposito) return assetAt.get(holdingKey(account.deposito, account.commodity));
+    for (const a of assetAt.values()) if (a.commodity === account.commodity) return a;
+    return undefined;
+  };
 
   // una posizione è "chiusa/storica" se il conto è fuori net worth, oppure se
   // è uno strumento con zero unità alla data selezionata.
   const isClosed = (r: PatrimonioRow): boolean =>
     !r.account.inNetWorth ||
     r.account.uscitaIl !== undefined ||
-    (!!r.account.commodity && (assetAt.get(r.account.commodity)?.units.isZero() ?? false));
+    (!!r.account.commodity && (assetFor(r.account)?.units.isZero() ?? false));
 
   // chiave di gruppo che, in modalità tracciamento, isola le posizioni chiuse.
   const bucketKey = (r: PatrimonioRow): string =>
@@ -323,12 +333,11 @@ function PatrimonioMisto({
       };
       // MWRR/TWRR solo sui conti a membership piena (peso 1): i compositi
       // distribuiti non hanno un rendimento per-classe ben definito.
-      const commodities = accounts
-        .filter((a) => (weights.get(a.id) ?? 1) === 1)
-        .map((a) => a.commodity)
-        .filter((c): c is string => !!c);
+      const holdings = accounts
+        .filter((a) => (weights.get(a.id) ?? 1) === 1 && a.commodity)
+        .map((a) => ({ commodity: a.commodity!, deposito: a.deposito }));
       out.set(k, {
-        stats: deriveGroupStats(commodities, booked.positions, directives, prices, asOf),
+        stats: deriveGroupStats(holdings, booked.positions, directives, prices, asOf),
         series: deriveValueSeries(input).global,
       });
     }
@@ -370,6 +379,9 @@ function PatrimonioMisto({
     new Decimal(0),
   );
   const portfolios = [...new Set(s.goals.map((g) => g.portfolio))].sort();
+
+  // stima del bollo titoli per conto titoli (valore × aliquota alla data scelta)
+  const bollo = deriveBolloTitoli({ rows: st.rows, depositi: s.config.depositi, when });
 
   // dimensioni di suddivisione del gruppo: tutte tranne globale (banale) e
   // quella principale già selezionata.
@@ -580,9 +592,7 @@ function PatrimonioMisto({
                               ? pct(pv.toNumber(), v.toNumber())
                               : undefined;
                           const isOpen = expanded === r.account.id;
-                          const asset = r.account.commodity
-                            ? assetAt.get(r.account.commodity)
-                            : undefined;
+                          const asset = assetFor(r.account);
                           // conti manuali con `carico`: rendimento a due numeri
                           const manualRet = asset
                             ? undefined
@@ -614,12 +624,13 @@ function PatrimonioMisto({
                                     )}
                                     {asset &&
                                       (() => {
-                                        const inCompare = selected.has(asset.commodity);
+                                        const hk = holdingKey(asset.deposito, asset.commodity);
+                                        const inCompare = selected.has(hk);
                                         return (
                                           <button
                                             onClick={(e) => {
                                               e.stopPropagation();
-                                              toggleSelected(asset.commodity);
+                                              toggleSelected(hk);
                                             }}
                                             title="Confronto"
                                             className={`rounded px-1.5 py-0.5 text-xs transition-opacity ${
@@ -963,6 +974,47 @@ function PatrimonioMisto({
           );
         })}
       </div>
+
+      {bollo.righe.length > 0 && (
+        <section className="rounded border border-zinc-800">
+          <div className="flex items-center gap-3 px-3 py-2 text-sm">
+            <span className="font-medium">Bollo titoli stimato</span>
+            <span
+              className="text-xs text-zinc-500"
+              title="Stima prospettica: valore dei titoli × aliquota annua per conto titoli. Distinta dal bollo storico già pagato (Expenses:Taxes:Bollo). Gestisci i conti titoli nella tab Movimenti."
+            >
+              {when === "live" ? "su valore live" : `al ${when}`} · annuo · conti titoli in
+              Movimenti
+            </span>
+            <span className="ml-auto font-medium tabular-nums">{fmtEur(bollo.totale)}</span>
+          </div>
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-t border-zinc-800/60 text-xs text-zinc-500 [&>th]:px-3 [&>th]:py-1.5">
+                <th className="text-left font-medium">Conto titoli</th>
+                <th className="text-right font-medium">Valore</th>
+                <th className="text-right font-medium">Aliquota</th>
+                <th className="text-right font-medium">Bollo stimato</th>
+              </tr>
+            </thead>
+            <tbody>
+              {bollo.righe.map((r) => (
+                <tr key={r.id} className="border-t border-zinc-800/60 [&>td]:px-3 [&>td]:py-1.5">
+                  <td>
+                    {r.nome}
+                    {r.owner && <span className="ml-2 text-xs text-zinc-600">{r.owner}</span>}
+                  </td>
+                  <td className="text-right tabular-nums">{fmtEur(r.valore)}</td>
+                  <td className="text-right tabular-nums text-zinc-400">
+                    {(r.aliquota * 100).toFixed(2).replace(".", ",")}%
+                  </td>
+                  <td className="text-right tabular-nums">{fmtEur(r.bollo)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </section>
+      )}
 
       {editing && (
         <Modal onClose={() => setEditing(undefined)}>

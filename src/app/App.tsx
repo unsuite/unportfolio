@@ -5,7 +5,6 @@ import { useApp } from "./store/selectors";
 import { dismissNotices, openStore, refreshFromDisk } from "./store/store";
 import { GoalsView } from "./views/GoalsView";
 import { GuidaView } from "./views/GuidaView";
-import { ImportView } from "./views/ImportView";
 import { MovimentiView } from "./views/MovimentiView";
 import { PatrimonioView } from "./views/PatrimonioView";
 import { PensioneView } from "./views/PensioneView";
@@ -20,7 +19,6 @@ const TABS = [
   ["ribilanciamento", "Ribilancia"],
   ["movimenti", "Movimenti"],
   ["prezzi", "Prezzi"],
-  ["import", "Import"],
   ["impostazioni", "Impostazioni"],
   ["guida", "Guida"],
 ] as const;
@@ -110,7 +108,6 @@ export function App() {
         {tab === "ribilanciamento" && <RibilanciamentoView />}
         {tab === "movimenti" && <MovimentiView />}
         {tab === "prezzi" && <PricesView />}
-        {tab === "import" && <ImportView />}
         {tab === "impostazioni" && <SettingsView />}
         {tab === "guida" && <GuidaView />}
       </main>

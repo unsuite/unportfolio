@@ -400,6 +400,7 @@ describe("codecs round-trip", () => {
       priorita: ["Liquidità - Gabriele", "Emergency Fund"],
       esuberoFlussi: [{ da: "A", verso: "B" }],
       esuberoLayout: [{ portfolio: "A", x: 10, y: 20 }],
+      depositi: [],
       storicoAnni: 3,
       storicoIntervallo: "1d",
       percorsoDati: "/Users/x/dati",

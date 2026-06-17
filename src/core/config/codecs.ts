@@ -1,11 +1,13 @@
 import { parse as parseToml, stringify as stringifyToml } from "smol-toml";
-import type {
-  AppConfig,
-  Goal,
-  PatrimonioAccount,
-  RebalanceTarget,
-  Sezione,
-  SnapshotEntry,
+import {
+  type AppConfig,
+  DEFAULT_BOLLO_ALIQUOTA,
+  type Deposito,
+  type Goal,
+  type PatrimonioAccount,
+  type RebalanceTarget,
+  type Sezione,
+  type SnapshotEntry,
 } from "../model/config";
 
 /** Plain-text codecs for the non-ledger data files. Tolerant on read, canonical on write. */
@@ -112,6 +114,8 @@ export function parseAccounts(text: string): PatrimonioAccount[] {
     };
     const portfolio = asString(a["portfolio"]);
     if (portfolio) acc.portfolio = portfolio;
+    const deposito = asString(a["deposito"]);
+    if (deposito) acc.deposito = deposito;
     const commodity = asString(a["commodity"]);
     if (commodity) acc.commodity = commodity;
     if (Array.isArray(a["split"])) {
@@ -152,6 +156,7 @@ export function serializeAccounts(accounts: PatrimonioAccount[]): string {
           valuta: a.valuta,
         };
         if (a.portfolio) o["portfolio"] = a.portfolio;
+        if (a.deposito) o["deposito"] = a.deposito;
         if (a.commodity) o["commodity"] = a.commodity;
         if (a.split && a.split.length > 0)
           o["split"] = a.split.map((s) => ({ classe: s.classe, peso: s.peso }));
@@ -239,6 +244,21 @@ export function parseConfig(text: string): AppConfig {
     operatingCurrency: asString(doc["operating_currency"]) ?? "EUR",
     priorita: Array.isArray(doc["priorita"]) ? doc["priorita"].map((p) => String(p)) : [],
     defaultBroker: asString(doc["default_broker"]) ?? "Directa",
+    depositi: Array.isArray(doc["deposito"])
+      ? (doc["deposito"] as Record<string, unknown>[])
+          .map((d) => {
+            const id = asString(d["id"]);
+            const dep: Deposito = {
+              id: id ?? "",
+              nome: asString(d["nome"]) ?? id ?? "",
+              owner: asString(d["owner"]) ?? "",
+              broker: asString(d["broker"]) ?? "",
+              aliquota: asNumber(d["aliquota"]) ?? DEFAULT_BOLLO_ALIQUOTA,
+            };
+            return dep;
+          })
+          .filter((d) => d.id)
+      : [],
     esuberoFlussi: Array.isArray(doc["esubero"])
       ? (doc["esubero"] as Record<string, unknown>[])
           .map((e) => ({
@@ -307,6 +327,15 @@ export function serializeConfig(cfg: AppConfig): string {
       x: Math.round(p.x),
       y: Math.round(p.y),
     }));
+  if (cfg.depositi.length > 0) {
+    o["deposito"] = cfg.depositi.map((d) => ({
+      id: d.id,
+      nome: d.nome,
+      owner: d.owner,
+      broker: d.broker,
+      aliquota: d.aliquota,
+    }));
+  }
   o["prezzi"] = { anni: cfg.storicoAnni, intervallo: cfg.storicoIntervallo };
   if (cfg.pensioni.length > 0) {
     o["pensione"] = cfg.pensioni.map((p) => {

@@ -1,4 +1,6 @@
 import { describe, expect, it } from "vitest";
+import { book, type InstrumentPosition } from "../src/core/beancount/booking";
+import { parse } from "../src/core/beancount/parser";
 import { missingAssetAccounts } from "../src/core/config/reconcile";
 import type { CommodityInfo } from "../src/core/derive/assets";
 import type { PatrimonioAccount } from "../src/core/model/config";
@@ -26,8 +28,24 @@ const commodities = new Map<string, CommodityInfo>([
   ],
 ]);
 
+/** posizioni di un deposito (segmento) per le due commodity di test */
+function positionsFor(deposito: string): Map<string, InstrumentPosition> {
+  const ledger = `
+2024-01-10 * "${deposito}" "Acquisto ETF"
+  Assets:Broker:${deposito}:IE00BK5BQT80      2 IE00BK5BQT80 {100.00 EUR}
+  Assets:Broker:${deposito}:Cash        -200.00 EUR
+
+2024-01-11 * "${deposito}" "Acquisto BOND"
+  Assets:Broker:${deposito}:IT0005547408     50 IT0005547408 {99.00 EUR}
+  Assets:Broker:${deposito}:Cash       -4950.00 EUR
+`;
+  return book(parse(ledger).directives).positions;
+}
+
 describe("missingAssetAccounts", () => {
-  it("crea un conto per ogni commodity senza riga patrimonio", () => {
+  it("crea un conto per ogni holding senza riga patrimonio", () => {
+    const positions = positionsFor("Directa");
+    // conto esistente senza deposito: copre l'ETF su qualunque deposito (compat)
     const existing: PatrimonioAccount[] = [
       {
         id: "ie00bk5bqt80-gabriele",
@@ -40,19 +58,36 @@ describe("missingAssetAccounts", () => {
         commodity: "IE00BK5BQT80",
       },
     ];
-    const missing = missingAssetAccounts(commodities, existing);
+    const missing = missingAssetAccounts(positions, commodities, existing);
     expect(missing).toHaveLength(1);
     const a = missing[0]!;
     expect(a.commodity).toBe("IT0005547408");
-    expect(a.nome).toBe("IT0005547408"); // default = ISIN
-    expect(a.sezione).toBe("asset");
+    expect(a.deposito).toBe("Directa");
     expect(a.tipo).toBe("BOND");
     expect(a.owner).toBe(""); // da assegnare
-    expect(a.inNetWorth).toBe(true);
-    expect(a.id).not.toBe("ie00bk5bqt80-gabriele"); // id stabile e distinto
   });
 
-  it("è idempotente: nessun conto mancante quando tutto è assegnato", () => {
+  it("crea un conto distinto per lo stesso ISIN su un altro deposito", () => {
+    const positions = positionsFor("DirectaAlessandra");
+    // conti già assegnati a un deposito diverso non coprono questo rapporto
+    const existing: PatrimonioAccount[] = [...commodities.keys()].map((c) => ({
+      id: `${c.toLowerCase()}-directa`,
+      nome: c,
+      sezione: "asset" as const,
+      tipo: "ETF",
+      owner: "",
+      inNetWorth: true,
+      valuta: "EUR",
+      commodity: c,
+      deposito: "Directa",
+    }));
+    const missing = missingAssetAccounts(positions, commodities, existing);
+    expect(missing).toHaveLength(2);
+    expect(missing.every((a) => a.deposito === "DirectaAlessandra")).toBe(true);
+  });
+
+  it("è idempotente con conti senza deposito (impianto a deposito unico)", () => {
+    const positions = positionsFor("Directa");
     const existing: PatrimonioAccount[] = [...commodities.keys()].map((c) => ({
       id: c.toLowerCase(),
       nome: c,
@@ -63,6 +98,6 @@ describe("missingAssetAccounts", () => {
       valuta: "EUR",
       commodity: c,
     }));
-    expect(missingAssetAccounts(commodities, existing)).toHaveLength(0);
+    expect(missingAssetAccounts(positions, commodities, existing)).toHaveLength(0);
   });
 });

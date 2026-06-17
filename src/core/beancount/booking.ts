@@ -14,9 +14,40 @@ export interface InstrumentCashFlow {
   amount: Decimal;
 }
 
-/** Aggregated state of one instrument (commodity held at cost). */
+const BROKER_PREFIX = "Assets:Broker:";
+
+/** Segmento di deposito di un account ledger: `Assets:Broker:<seg>:…` → <seg>. */
+export function depositoSegmentOf(account: string): string | undefined {
+  if (!account.startsWith(BROKER_PREFIX)) return undefined;
+  const seg = account.slice(BROKER_PREFIX.length).split(":")[0];
+  return seg || undefined;
+}
+
+/** Chiave di una posizione (holding): deposito + commodity. */
+export function holdingKey(deposito: string, commodity: string): string {
+  return `${deposito}|${commodity}`;
+}
+
+/**
+ * Trova la posizione di un (deposito, commodity). Con `deposito` valorizzato fa
+ * match esatto sulla chiave holding; senza deposito (conti non ancora assegnati)
+ * ripiega sulla prima posizione di quella commodity — caso a deposito unico.
+ */
+export function findPosition(
+  positions: Map<string, InstrumentPosition>,
+  deposito: string | undefined,
+  commodity: string,
+): InstrumentPosition | undefined {
+  if (deposito) return positions.get(holdingKey(deposito, commodity));
+  for (const p of positions.values()) if (p.commodity === commodity) return p;
+  return undefined;
+}
+
+/** Aggregated state of one instrument (commodity held at cost) in one deposito. */
 export interface InstrumentPosition {
   commodity: string;
+  /** segmento di deposito (`Assets:Broker:<deposito>:…`); "" se fuori broker */
+  deposito: string;
   accounts: Set<string>;
   units: Decimal;
   lots: Lot[];
@@ -49,9 +80,10 @@ export interface BookingResult {
 
 const ZERO = new Decimal(0);
 
-function emptyPosition(commodity: string): InstrumentPosition {
+function emptyPosition(commodity: string, deposito: string): InstrumentPosition {
   return {
     commodity,
+    deposito,
     accounts: new Set(),
     units: ZERO,
     lots: [],
@@ -120,11 +152,14 @@ export function book(
   const positions = new Map<string, InstrumentPosition>();
   const errors: string[] = [];
 
-  const getPos = (commodity: string): InstrumentPosition => {
-    let p = positions.get(commodity);
+  const commoditiesSeen = new Set<string>();
+  const getPos = (commodity: string, deposito: string): InstrumentPosition => {
+    commoditiesSeen.add(commodity);
+    const key = holdingKey(deposito, commodity);
+    let p = positions.get(key);
     if (!p) {
-      p = emptyPosition(commodity);
-      positions.set(commodity, p);
+      p = emptyPosition(commodity, deposito);
+      positions.set(key, p);
     }
     return p;
   };
@@ -135,6 +170,18 @@ export function book(
     .sort((a, b) => (a.date < b.date ? -1 : a.date > b.date ? 1 : 0));
 
   for (const txn of txns) {
+    // deposito della transazione: ogni movimento importato appartiene a un solo
+    // rapporto, individuato dalla gamba broker (Assets:Broker:<seg>:…). Serve ad
+    // attribuire income/fees/withholding alla posizione del deposito giusto.
+    let txnDeposito = "";
+    for (const p of txn.postings) {
+      const seg = depositoSegmentOf(p.account);
+      if (seg) {
+        txnDeposito = seg;
+        break;
+      }
+    }
+
     // --- resolve the elided posting (at most one without amount) ---
     const residualByCurrency = new Map<string, Decimal>();
     let elided: Posting | undefined;
@@ -180,7 +227,7 @@ export function book(
       const p = w.posting;
       if (!p.amount || p.cost === undefined) continue;
       const commodity = p.amount.currency;
-      const pos = getPos(commodity);
+      const pos = getPos(commodity, depositoSegmentOf(p.account) ?? txnDeposito);
       pos.accounts.add(p.account);
       touchedInstruments.add(commodity);
 
@@ -254,13 +301,13 @@ export function book(
     for (const p of txn.postings) {
       if (!p.amount) continue;
       const leaf = p.account.split(":").pop()!;
-      if (positions.has(leaf) || /^[A-Z][A-Z0-9'._-]*\d/.test(leaf)) {
+      if (commoditiesSeen.has(leaf) || /^[A-Z][A-Z0-9'._-]*\d/.test(leaf)) {
         if (p.account.startsWith("Income:")) touchedInstruments.add(leaf);
       }
     }
 
     for (const commodity of touchedInstruments) {
-      const pos = getPos(commodity);
+      const pos = getPos(commodity, txnDeposito);
       let cash = ZERO;
       for (const p of txn.postings) {
         if (!p.amount) continue;
@@ -286,7 +333,7 @@ export function book(
 
     // recompute open-lot cost basis lazily at the end of each txn touching it
     for (const commodity of touchedInstruments) {
-      const pos = positions.get(commodity);
+      const pos = positions.get(holdingKey(txnDeposito, commodity));
       if (pos)
         pos.costBasis = pos.lots.reduce((acc, l) => acc.add(l.units.mul(l.costPerUnit)), ZERO);
     }

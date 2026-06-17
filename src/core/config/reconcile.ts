@@ -1,33 +1,53 @@
+import type { InstrumentPosition } from "../beancount/booking";
 import type { CommodityInfo } from "../derive/assets";
 import type { PatrimonioAccount } from "../model/config";
 
 /**
- * Asset accounts to create for instruments that have no patrimonio row yet.
+ * Asset accounts to create for holdings that have no patrimonio row yet.
  *
- * Ogni strumento (direttiva commodity) deve avere un conto in patrimonio.toml,
- * così il modello è sempre 1:1 commodity↔conto e l'etichetta visualizzata è il
- * `nome` del conto. Gli strumenti importati ma non ancora assegnati prendono un
- * conto di default (owner vuoto = "da assegnare"); il `nome` parte dall'ISIN e
- * si cura a mano. Idempotente: ritorna [] quando ogni commodity ha già un conto.
+ * Ogni posizione (deposito, commodity) deve avere un conto in patrimonio.toml.
+ * Gli strumenti importati ma non ancora assegnati prendono un conto di default
+ * (owner vuoto = "da assegnare", `deposito` = segmento del rapporto); il `nome`
+ * parte dall'ISIN e si cura a mano.
+ *
+ * Copertura retro-compatibile: un conto senza `deposito` copre qualunque
+ * deposito di quella commodity (impianto a deposito unico). Una volta assegnato
+ * il `deposito` a un conto, le posizioni dello stesso ISIN su altri depositi
+ * non sono più coperte e ottengono un conto proprio. Idempotente.
  */
 export function missingAssetAccounts(
+  positions: Map<string, InstrumentPosition>,
   commodities: Map<string, CommodityInfo>,
   accounts: PatrimonioAccount[],
 ): PatrimonioAccount[] {
-  const have = new Set(accounts.map((a) => a.commodity).filter((c): c is string => !!c));
+  const ledgerAccounts = accounts.filter((a) => !!a.commodity);
+  const covers = (deposito: string, commodity: string): boolean =>
+    ledgerAccounts.some(
+      (a) => a.commodity === commodity && (a.deposito === undefined || a.deposito === deposito),
+    );
+
   const out: PatrimonioAccount[] = [];
-  for (const [commodity, info] of commodities) {
-    if (have.has(commodity)) continue;
-    out.push({
-      id: commodity.toLowerCase(),
+  const created = new Set<string>();
+  for (const pos of positions.values()) {
+    const { deposito, commodity } = pos;
+    const key = `${deposito}|${commodity}`;
+    if (created.has(key) || covers(deposito, commodity)) continue;
+    created.add(key);
+    const info = commodities.get(commodity);
+    const acc: PatrimonioAccount = {
+      id: deposito
+        ? `${commodity.toLowerCase()}-${deposito.toLowerCase()}`
+        : commodity.toLowerCase(),
       nome: commodity, // default = ISIN, da curare a mano
       sezione: "asset",
-      tipo: info.assetClass,
+      tipo: info?.assetClass ?? "ETF",
       owner: "",
       inNetWorth: true,
       valuta: "EUR",
       commodity,
-    });
+    };
+    if (deposito) acc.deposito = deposito;
+    out.push(acc);
   }
   return out;
 }

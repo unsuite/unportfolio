@@ -24,6 +24,13 @@ export interface MappingContext {
   /** lookup by ticker OR isin */
   instrument(key: string): InstrumentInfo | undefined;
   defaultBroker?: string;
+  /**
+   * conto titoli/deposito di destinazione (Deposito.id): diventa il segmento di
+   * account nel ledger (`Assets:Broker:<deposito>:…`), così rapporti diversi —
+   * anche sullo stesso broker — restano separati. Assente = usa il broker del
+   * movimento o il defaultBroker (retro-compatibile).
+   */
+  deposito?: string;
 }
 
 export interface MappingOutput {
@@ -122,7 +129,9 @@ export function movimentoToTransaction(
   ctx: MappingContext,
   occurrence = 0,
 ): TransactionDirective | string {
-  const broker = m.broker || ctx.defaultBroker || "Unknown";
+  // il segmento di account è il deposito scelto (se presente), altrimenti il
+  // broker del movimento; il payee resta il nome del rapporto/segmento.
+  const broker = ctx.deposito || m.broker || ctx.defaultBroker || "Unknown";
   const cash = cashAccount(broker);
   const narration = m.descrizione?.trim() ? `${m.tipo} — ${m.descrizione.trim()}` : m.tipo;
   const meta = baseMeta(m, occurrence);

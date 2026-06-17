@@ -53,7 +53,7 @@ export interface ImportPreview {
   warnings: string[];
 }
 
-export function previewImport(file: ImportFile): ImportPreview {
+export function previewImport(file: ImportFile, deposito?: string): ImportPreview {
   const importer = importers.find((i) => i.sniff(file));
   if (!importer) throw new Error("nessun importer riconosce questo file");
   const result = importer.parse(file);
@@ -80,6 +80,7 @@ export function previewImport(file: ImportFile): ImportPreview {
   const mapped = mapMovimenti(result.movimenti, {
     instrument: (k) => byKey.get(k),
     defaultBroker: getState().config.defaultBroker,
+    ...(deposito ? { deposito } : {}),
   });
   const existing = existingImportIds(allDirectives());
   const newTransactions = mapped.transactions.filter((t) => !existing.has(t.meta["import-id"]!));

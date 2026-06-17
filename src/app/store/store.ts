@@ -1,5 +1,6 @@
 import type { Decimal } from "decimal.js";
 import type { Directive, IsoDate, LedgerFile } from "../../core/beancount/ast";
+import { book } from "../../core/beancount/booking";
 import { parse } from "../../core/beancount/parser";
 import { formatDirective, serialize } from "../../core/beancount/serializer";
 import {
@@ -15,6 +16,7 @@ import { missingAssetAccounts } from "../../core/config/reconcile";
 import { readCommodityInfo } from "../../core/derive/assets";
 import type {
   AppConfig,
+  Deposito,
   Goal,
   PatrimonioAccount,
   RebalanceTarget,
@@ -46,6 +48,7 @@ const DEFAULT_CONFIG: AppConfig = {
   esuberoFlussi: [],
   esuberoLayout: [],
   defaultBroker: "Directa",
+  depositi: [],
   storicoAnni: 2,
   storicoIntervallo: "1wk",
   pensioni: [],
@@ -158,8 +161,10 @@ export async function openStore(store: DataStore): Promise<void> {
  * Idempotente: scrive patrimonio.toml solo quando manca davvero un conto.
  */
 export async function reconcileAssetAccounts(): Promise<boolean> {
-  const commodities = readCommodityInfo(allDirectives());
-  const missing = missingAssetAccounts(commodities, state.accounts);
+  const directives = allDirectives();
+  const commodities = readCommodityInfo(directives);
+  const { positions } = book(directives, { operatingCurrency: state.config.operatingCurrency });
+  const missing = missingAssetAccounts(positions, commodities, state.accounts);
   if (missing.length === 0) return false;
   const { serializeAccounts } = await import("../../core/config/codecs");
   const next = [...state.accounts, ...missing];
@@ -284,6 +289,28 @@ export async function saveTargets(targets: RebalanceTarget[]): Promise<boolean> 
 export async function updateConfig(patch: Partial<AppConfig>): Promise<boolean> {
   const { serializeConfig } = await import("../../core/config/codecs");
   return writeFile("config.toml", serializeConfig({ ...state.config, ...patch }));
+}
+
+/** Inserisce o aggiorna un conto titoli/deposito (merge per id) in config.toml. */
+export async function upsertDeposito(deposito: Deposito): Promise<boolean> {
+  const existing = state.config.depositi.findIndex((d) => d.id === deposito.id);
+  const depositi =
+    existing >= 0
+      ? state.config.depositi.map((d, i) => (i === existing ? deposito : d))
+      : [...state.config.depositi, deposito];
+  return updateConfig({ depositi });
+}
+
+/** Elimina un conto titoli e ripulisce il riferimento dai conti che lo puntano. */
+export async function deleteDeposito(id: string): Promise<boolean> {
+  const depositi = state.config.depositi.filter((d) => d.id !== id);
+  const ok = await updateConfig({ depositi });
+  if (!ok) return false;
+  const referenced = state.accounts.filter((a) => a.deposito === id);
+  if (referenced.length === 0) return ok;
+  const { serializeAccounts } = await import("../../core/config/codecs");
+  const next = state.accounts.map((a) => (a.deposito === id ? { ...a, deposito: undefined } : a));
+  return writeFile("patrimonio.toml", serializeAccounts(next));
 }
 
 /** Edita i metadati di una direttiva commodity in accounts.beancount. */

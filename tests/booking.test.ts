@@ -1,6 +1,6 @@
 import { Decimal } from "decimal.js";
 import { describe, expect, it } from "vitest";
-import { book } from "../src/core/beancount/booking";
+import { book, holdingKey } from "../src/core/beancount/booking";
 import { parse } from "../src/core/beancount/parser";
 import { projectToMaturity, remainingCoupons } from "../src/core/math/bond";
 import { xirr } from "../src/core/math/xirr";
@@ -56,7 +56,7 @@ describe("booking", () => {
   });
 
   it("books FIFO lots on partial sell", () => {
-    const pos = result.positions.get("VWCE")!;
+    const pos = result.positions.get(holdingKey("Directa", "VWCE"))!;
     // bought 2 @114.19 + 3 @120, sold 4 → FIFO removes 2@114.19 + 2@120
     expect(pos.units.toNumber()).toBe(1);
     expect(pos.lots).toHaveLength(1);
@@ -65,7 +65,7 @@ describe("booking", () => {
   });
 
   it("computes realized gain FIFO", () => {
-    const pos = result.positions.get("VWCE")!;
+    const pos = result.positions.get(holdingKey("Directa", "VWCE"))!;
     // proceeds 520 − cost removed (2×114.19 + 2×120 = 468.38) = 51.62
     expect(pos.realizedGain.toFixed(2)).toBe("51.62");
     expect(pos.sellProceeds.toNumber()).toBe(520);
@@ -77,23 +77,23 @@ describe("booking", () => {
   });
 
   it("accumulates buy cost (prezzo di carico, negative)", () => {
-    const pos = result.positions.get("VWCE")!;
+    const pos = result.positions.get(holdingKey("Directa", "VWCE"))!;
     expect(pos.buyCost.toFixed(2)).toBe("-588.38"); // −(228.38+360)
   });
 
   it("attributes fees via instrument metadata", () => {
-    const pos = result.positions.get("VWCE")!;
+    const pos = result.positions.get(holdingKey("Directa", "VWCE"))!;
     expect(pos.fees.toFixed(2)).toBe("-1.50");
   });
 
   it("attributes coupons and withholding to the bond", () => {
-    const pos = result.positions.get("IT0005547408")!;
+    const pos = result.positions.get(holdingKey("Directa", "IT0005547408"))!;
     expect(pos.income.toFixed(2)).toBe("41.63");
     expect(pos.withholding.toFixed(2)).toBe("-5.20");
   });
 
   it("collects per-instrument cash flows for XIRR", () => {
-    const pos = result.positions.get("VWCE")!;
+    const pos = result.positions.get(holdingKey("Directa", "VWCE"))!;
     const flows = pos.cashFlows.map((f) => [f.date, f.amount.toNumber()]);
     expect(flows).toEqual([
       ["2024-02-26", -228.38],
@@ -189,5 +189,44 @@ describe("bond math", () => {
     expect(p.netRemainingGain.toFixed(4)).toBe("180.6875");
     // net value at maturity = 180.6875 + 4960
     expect(p.netValueAtMaturity.toFixed(4)).toBe("5140.6875");
+  });
+});
+
+describe("booking multi-deposito", () => {
+  // stesso ISIN (VWCE) su due conti titoli: due posizioni distinte, e cedola
+  // attribuita al deposito della gamba cash.
+  const LEDGER = `
+2024-02-26 * "DirectaGabriele" "Acquisto VWCE"
+  Assets:Broker:DirectaGabriele:VWCE             10 VWCE {100.00 EUR}
+  Assets:Broker:DirectaGabriele:Cash       -1000.00 EUR
+
+2024-03-15 * "DirectaAlessandra" "Acquisto VWCE"
+  Assets:Broker:DirectaAlessandra:VWCE            4 VWCE {120.00 EUR}
+  Assets:Broker:DirectaAlessandra:Cash      -480.00 EUR
+
+2025-06-10 * "DirectaGabriele" "Dividendi VWCE"
+  Assets:Broker:DirectaGabriele:Cash          15.00 EUR
+  Income:Dividends:VWCE                      -15.00 EUR
+`;
+  const result = book(parse(LEDGER).directives);
+
+  it("non produce errori", () => {
+    expect(result.errors).toEqual([]);
+  });
+
+  it("tiene separate le posizioni dello stesso ISIN per deposito", () => {
+    const g = result.positions.get(holdingKey("DirectaGabriele", "VWCE"))!;
+    const a = result.positions.get(holdingKey("DirectaAlessandra", "VWCE"))!;
+    expect(g.units.toNumber()).toBe(10);
+    expect(a.units.toNumber()).toBe(4);
+    expect(g.deposito).toBe("DirectaGabriele");
+    expect(a.deposito).toBe("DirectaAlessandra");
+  });
+
+  it("attribuisce il dividendo al deposito della gamba cash", () => {
+    const g = result.positions.get(holdingKey("DirectaGabriele", "VWCE"))!;
+    const a = result.positions.get(holdingKey("DirectaAlessandra", "VWCE"))!;
+    expect(g.income.toNumber()).toBe(15);
+    expect(a.income.toNumber()).toBe(0);
   });
 });

@@ -123,3 +123,71 @@ data_nascita = "1988-10-21"
     expect(round.pensionePortafogli).toEqual(cfg.pensionePortafogli);
   });
 });
+
+describe("config [[deposito]]", () => {
+  it("parsa più conti titoli", () => {
+    const cfg = parseConfig(`
+operating_currency = "EUR"
+
+[[deposito]]
+id = "Directa"
+nome = "Directa — Gabriele"
+owner = "Gabriele"
+broker = "Directa"
+aliquota = 0.002
+
+[[deposito]]
+id = "DirectaAlessandra"
+nome = "Directa — Alessandra"
+owner = "Alessandra"
+broker = "Directa"
+aliquota = 0.001
+`);
+    expect(cfg.depositi).toHaveLength(2);
+    expect(cfg.depositi[0]).toEqual({
+      id: "Directa",
+      nome: "Directa — Gabriele",
+      owner: "Gabriele",
+      broker: "Directa",
+      aliquota: 0.002,
+    });
+    expect(cfg.depositi[1]?.aliquota).toBe(0.001);
+  });
+
+  it("aliquota di default quando manca", () => {
+    const cfg = parseConfig(`
+[[deposito]]
+id = "Directa"
+nome = "Directa"
+owner = "Gabriele"
+broker = "Directa"
+`);
+    expect(cfg.depositi[0]?.aliquota).toBe(0.002);
+  });
+
+  it("array vuoto se la sezione manca", () => {
+    expect(parseConfig(`operating_currency = "EUR"`).depositi).toEqual([]);
+  });
+
+  it("round-trip serialize→parse preserva i depositi", () => {
+    const cfg = parseConfig(`operating_currency = "EUR"`);
+    cfg.depositi = [
+      {
+        id: "Directa",
+        nome: "Directa — Gabriele",
+        owner: "Gabriele",
+        broker: "Directa",
+        aliquota: 0.002,
+      },
+      {
+        id: "DirectaAlessandra",
+        nome: "Directa — Alessandra",
+        owner: "Alessandra",
+        broker: "Directa",
+        aliquota: 0.0015,
+      },
+    ];
+    const round = parseConfig(serializeConfig(cfg));
+    expect(round.depositi).toEqual(cfg.depositi);
+  });
+});

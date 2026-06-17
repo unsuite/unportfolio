@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { accountSlug } from "../../core/config/codecs";
 import type { PatrimonioAccount, Sezione } from "../../core/model/config";
+import { useApp } from "../store/selectors";
 import { deletePatrimonioAccount, upsertPatrimonioAccount } from "../store/store";
 
 const SEZIONI: { value: Sezione; label: string }[] = [
@@ -22,12 +23,14 @@ export function ContoForm({
   portfolios: string[];
   onClose: () => void;
 }) {
+  const s = useApp();
   const base = conto ?? draft;
   const [nome, setNome] = useState(base?.nome ?? "");
   const [sezione, setSezione] = useState<Sezione>(base?.sezione ?? "cash");
   const [tipo, setTipo] = useState(base?.tipo ?? "Liquidity");
   const [owner, setOwner] = useState(base?.owner ?? "");
   const [portfolio, setPortfolio] = useState(base?.portfolio ?? "");
+  const [deposito, setDeposito] = useState(base?.deposito ?? "");
   const [inNetWorth, setInNetWorth] = useState(base?.inNetWorth ?? true);
   const [splitText, setSplitText] = useState(
     base?.split?.map((sp) => `${sp.classe} ${sp.peso * 100}`).join("\n") ?? "",
@@ -55,6 +58,7 @@ export function ContoForm({
       valuta: conto?.valuta ?? "EUR",
     };
     if (portfolio) next.portfolio = portfolio;
+    if (deposito) next.deposito = deposito;
     if (commodity) next.commodity = commodity;
     if (split.length > 0) next.split = split;
     await upsertPatrimonioAccount(next);
@@ -123,6 +127,22 @@ export function ContoForm({
             {portfolios.map((p) => (
               <option key={p} value={p}>
                 {p}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label className="block">
+          <span className="text-xs text-zinc-500">Conto titoli / deposito (bollo)</span>
+          <select
+            value={deposito}
+            onChange={(e) => setDeposito(e.target.value)}
+            className="mt-0.5 w-full rounded border border-zinc-700 bg-zinc-800 px-2 py-1"
+          >
+            <option value="">— nessuno —</option>
+            {s.config.depositi.map((d) => (
+              <option key={d.id} value={d.id}>
+                {d.nome}
+                {d.owner ? ` (${d.owner})` : ""}
               </option>
             ))}
           </select>

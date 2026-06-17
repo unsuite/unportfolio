@@ -17,6 +17,27 @@ export interface Goal {
 
 export type Sezione = "debt" | "credit" | "cash" | "asset";
 
+/**
+ * Conto titoli / deposito (config.toml [[deposito]]). Entità di prima classe:
+ * più rapporti possono insistere sullo stesso broker, ognuno con owner e
+ * aliquota di bollo propri.
+ *
+ * `id` è anche il segmento di account nel ledger
+ * (`Assets:Broker:<id>:<commodity>`): stabile, unico, mai ricalcolato su
+ * rinomina. Per il deposito pre-esistente resta `Directa`, così lo storico
+ * combacia senza riscritture.
+ */
+export interface Deposito {
+  id: string; // = segmento di account ledger (es. "Directa", "DirectaAlessandra")
+  nome: string; // etichetta leggibile
+  owner: string;
+  broker: string; // attributo descrittivo; più depositi possono condividerlo
+  aliquota: number; // frazione annua del bollo titoli (default 0.002 = 0,20%)
+}
+
+/** aliquota di bollo titoli di default: 0,20% annuo (2 per mille). */
+export const DEFAULT_BOLLO_ALIQUOTA = 0.002;
+
 /** Split percentuale per asset class di un account composito (es. fondo pensione). */
 export interface AccountSplit {
   classe: string; // Bond | Stock | ...
@@ -31,6 +52,9 @@ export interface PatrimonioAccount {
   tipo: string; // Liquidity | High Yield Savings | Debt | Credit | p2p | ...
   owner: string;
   portfolio?: string; // goal-portfolio assignment
+  /** conto titoli di appartenenza (Deposito.id); soggetto a bollo titoli.
+   *  per i conti ledger-backed individua il sottoalbero da cui leggere le unità */
+  deposito?: string;
   inNetWorth: boolean;
   valuta: string;
   /** when set, the value comes from the ledger: units × price at date */
@@ -86,6 +110,8 @@ export interface AppConfig {
   /** posizioni dei nodi nell'editor grafico; vuoto = auto-layout */
   esuberoLayout: NodoPos[];
   defaultBroker: string;
+  /** conti titoli configurati (per la stima del bollo e l'attribuzione import) */
+  depositi: Deposito[];
   /** anni di storico prezzi da mantenere (copertura incrementale) */
   storicoAnni: number;
   /** intervallo di campionamento dello storico: 1d | 1wk | 1mo */

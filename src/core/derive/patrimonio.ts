@@ -27,21 +27,34 @@ export interface PatrimonioStatement {
 
 const ZERO = new Decimal(0);
 
-/** units of a commodity held across all accounts at end of `date`. */
+/**
+ * units of a commodity held at end of `date`. Con `accountPrefix` somma solo le
+ * gambe il cui account inizia con quel prefisso (es. `Assets:Broker:<dep>:`),
+ * così lo stesso ISIN su depositi diversi resta separato; senza prefisso somma
+ * su tutti gli account (comportamento globale, retro-compatibile).
+ */
 export function unitsAt(
   transactions: TransactionDirective[],
   commodity: string,
   date: IsoDate,
+  accountPrefix?: string,
 ): Decimal {
   let units = ZERO;
   for (const t of transactions) {
     if (t.date > date) continue;
     for (const p of t.postings) {
-      if (p.amount && p.cost !== undefined && p.amount.currency === commodity)
+      if (p.amount && p.cost !== undefined && p.amount.currency === commodity) {
+        if (accountPrefix && !p.account.startsWith(accountPrefix)) continue;
         units = units.add(p.amount.number);
+      }
     }
   }
   return units;
+}
+
+/** prefisso account per limitare le unità al sottoalbero del deposito. */
+export function depositoPrefix(deposito: string | undefined): string | undefined {
+  return deposito ? `Assets:Broker:${deposito}:` : undefined;
 }
 
 export interface DerivePatrimonioInput {
@@ -66,12 +79,13 @@ export function derivePatrimonio(input: DerivePatrimonioInput): PatrimonioStatem
     const values = new Map<IsoDate, Decimal | undefined>();
     let live: Decimal | undefined;
     if (account.commodity) {
+      const prefix = depositoPrefix(account.deposito);
       for (const date of dates) {
-        const units = unitsAt(transactions, account.commodity, date);
+        const units = unitsAt(transactions, account.commodity, date, prefix);
         const pp = priceAt(input.prices, account.commodity, date);
         values.set(date, pp ? units.mul(pp.price) : undefined);
       }
-      const unitsNow = unitsAt(transactions, account.commodity, input.asOf);
+      const unitsNow = unitsAt(transactions, account.commodity, input.asOf, prefix);
       const liveQuote =
         input.liveQuotes?.get(account.commodity) ??
         priceAt(input.prices, account.commodity, input.asOf)?.price;

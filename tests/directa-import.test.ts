@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { book } from "../src/core/beancount/booking";
+import { book, holdingKey } from "../src/core/beancount/booking";
 import { directaImporter, parseItalianDate, parseItalianNumber } from "../src/core/import/directa";
 import { mapMovimenti } from "../src/core/import/mapping";
 import type { InstrumentInfo } from "../src/core/model/movimento";
@@ -74,7 +74,7 @@ describe("directa CSV importer", () => {
     const cash = booked.balances.get("Assets:Broker:Directa:Cash")!.get("EUR")!;
     // -262,84 -5 +1500 +135,10 -12,30
     expect(cash.toFixed(2)).toBe("1354.96");
-    const pos = booked.positions.get("IE00BK5BQT80")!;
+    const pos = booked.positions.get(holdingKey("Directa", "IE00BK5BQT80"))!;
     expect(pos.units.toNumber()).toBe(1);
     expect(pos.realizedGain.toFixed(2)).toBe("3.68"); // 135,10 − 131,42
   });
