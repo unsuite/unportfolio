@@ -3,7 +3,7 @@ import { useState } from "react";
 import { sanitizeAccountSegment } from "../../core/import/mapping";
 import { DEFAULT_BOLLO_ALIQUOTA, type Deposito } from "../../core/model/config";
 import { useApp } from "../store/selectors";
-import { deleteDeposito, upsertDeposito } from "../store/store";
+import { deleteDeposito, renameDeposito, upsertDeposito } from "../store/store";
 
 /** slug pulito per il segmento di account (niente separatori multipli/estremi) */
 function slugId(s: string): string {
@@ -55,24 +55,30 @@ export function DepositoForm({
   ]);
   const brokers = distinct([s.config.defaultBroker, ...s.config.depositi.map((d) => d.broker)]);
 
-  const effectiveId = isNew ? id : deposito.id;
-
   function onNome(v: string) {
     setNome(v);
     if (isNew && !idTouched) setId(slugId(v));
   }
 
   async function save() {
-    const finalId = isNew ? id.trim() || slugId(nome) : deposito!.id;
+    const finalId = id.trim() || slugId(nome);
     if (!nome.trim() || !finalId) {
       setErr("Nome e id sono obbligatori");
       return;
     }
-    if (isNew && existingIds.includes(finalId)) {
+    if (finalId !== deposito?.id && existingIds.includes(finalId)) {
       setErr(`id "${finalId}" già in uso`);
       return;
     }
     setErr(undefined);
+    // id cambiato su un conto esistente: migra ledger + aggancia storico
+    if (deposito && finalId !== deposito.id) {
+      const ok = await renameDeposito(deposito.id, finalId);
+      if (!ok) {
+        setErr("rinomina id fallita");
+        return;
+      }
+    }
     const aliquota = (Number(aliquotaPct.replace(",", ".")) || 0) / 100;
     await upsertDeposito({
       id: finalId,
@@ -152,18 +158,19 @@ export function DepositoForm({
       <label className="mt-2 flex items-center gap-2">
         <span className="text-[11px] text-zinc-500">id (segmento ledger)</span>
         <input
-          value={effectiveId}
+          value={id}
           onChange={(e) => {
             setIdTouched(true);
             setId(slugId(e.target.value));
           }}
-          disabled={!isNew}
           placeholder="Directa"
-          className="w-44 rounded border border-zinc-800 bg-zinc-800/60 px-2 py-0.5 font-mono text-xs disabled:text-zinc-500"
+          className="w-44 rounded border border-zinc-800 bg-zinc-800/60 px-2 py-0.5 font-mono text-xs"
         />
         <span className="text-[11px] text-zinc-600">
-          Assets:Broker:<span className="text-zinc-400">{effectiveId || "…"}</span>:&lt;ISIN&gt;
-          {isNew && " — usa “Directa” per il conto storico"}
+          Assets:Broker:<span className="text-zinc-400">{id || "…"}</span>:&lt;ISIN&gt;
+          {isNew
+            ? " — usa “Directa” per il conto storico"
+            : " — cambiandolo rinomino i movimenti e aggancio lo storico"}
         </span>
       </label>
       {err && <div className="mt-1 text-[11px] text-red-400">{err}</div>}

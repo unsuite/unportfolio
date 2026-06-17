@@ -313,6 +313,49 @@ export async function deleteDeposito(id: string): Promise<boolean> {
   return writeFile("patrimonio.toml", serializeAccounts(next));
 }
 
+/**
+ * Rinomina l'id (= segmento di account ledger) di un conto titoli, migrando i
+ * riferimenti: riscrive `Assets:Broker:<old>:…` → `Assets:Broker:<new>:…` nei
+ * file ledger, sposta i riferimenti `deposito` dei conti e **aggancia** gli
+ * eventuali conti storici (ledger-backed, senza deposito) le cui posizioni
+ * ricadono sotto il nuovo segmento — utile per i movimenti importati prima
+ * dell'introduzione dei conti titoli.
+ */
+export async function renameDeposito(oldId: string, newId: string): Promise<boolean> {
+  if (!newId || newId === oldId) return false;
+  if (state.config.depositi.some((d) => d.id === newId)) {
+    notify(`id "${newId}" già in uso`);
+    return false;
+  }
+  const oldPrefix = `Assets:Broker:${oldId}:`;
+  const newPrefix = `Assets:Broker:${newId}:`;
+  // 1. riscrivi i file ledger che usano il vecchio segmento (serializer lossless)
+  for (const path of ["ledger/movimenti.beancount", "ledger/accounts.beancount"] as const) {
+    const text = state.files.get(path)?.text;
+    if (text?.includes(oldPrefix)) await writeFile(path, text.split(oldPrefix).join(newPrefix));
+  }
+  // 2. config: rinomina l'id del deposito
+  await updateConfig({
+    depositi: state.config.depositi.map((d) => (d.id === oldId ? { ...d, id: newId } : d)),
+  });
+  // 3. conti patrimonio: sposta i riferimenti e aggancia gli storici scoperti
+  const { positions } = book(allDirectives(), {
+    operatingCurrency: state.config.operatingCurrency,
+  });
+  const heldByNew = new Set(
+    [...positions.values()].filter((p) => p.deposito === newId).map((p) => p.commodity),
+  );
+  const accounts = state.accounts.map((a) => {
+    if (a.deposito === oldId) return { ...a, deposito: newId };
+    if (a.commodity && !a.deposito && heldByNew.has(a.commodity)) return { ...a, deposito: newId };
+    return a;
+  });
+  const { serializeAccounts } = await import("../../core/config/codecs");
+  await writeFile("patrimonio.toml", serializeAccounts(accounts));
+  notify(`conto titoli rinominato in "${newId}" e storico agganciato`);
+  return true;
+}
+
 /** Edita i metadati di una direttiva commodity in accounts.beancount. */
 export async function updateCommodityMeta(
   commodity: string,
