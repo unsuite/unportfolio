@@ -1,6 +1,11 @@
 import { Decimal } from "decimal.js";
 import type { IsoDate } from "../beancount/ast";
-import { DEFAULT_BOLLO_ALIQUOTA, type Deposito } from "../model/config";
+import {
+  BOLLO_PERIODI,
+  type BolloPeriodicita,
+  DEFAULT_BOLLO_ALIQUOTA,
+  type Deposito,
+} from "../model/config";
 import type { PatrimonioRow } from "./patrimonio";
 
 /**
@@ -21,8 +26,12 @@ export interface BolloRiga {
   valore: Decimal;
   /** aliquota applicata (frazione annua) */
   aliquota: number;
-  /** bollo stimato = valore × aliquota */
+  /** cadenza di addebito */
+  periodicita: BolloPeriodicita;
+  /** bollo annuo stimato = valore × aliquota */
   bollo: Decimal;
+  /** bollo per singolo addebito = bollo annuo / numero di periodi */
+  bolloPeriodo: Decimal;
 }
 
 export interface BolloStatement {
@@ -68,6 +77,7 @@ export function deriveBolloTitoli(input: DeriveBolloInput): BolloStatement {
   for (const id of ids) {
     const dep = byDeposito.get(id);
     const aliquota = dep?.aliquota ?? defaultAliquota;
+    const periodicita = dep?.periodicita ?? "annuale";
     const valore = valori.get(id) ?? ZERO;
     const bollo = valore.mul(aliquota);
     totale = totale.add(bollo);
@@ -77,7 +87,9 @@ export function deriveBolloTitoli(input: DeriveBolloInput): BolloStatement {
       owner: dep?.owner ?? "",
       valore,
       aliquota,
+      periodicita,
       bollo,
+      bolloPeriodo: bollo.div(BOLLO_PERIODI[periodicita]),
     });
   }
   righe.sort((a, b) => b.valore.comparedTo(a.valore) || a.id.localeCompare(b.id));

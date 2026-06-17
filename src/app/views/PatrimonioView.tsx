@@ -994,7 +994,8 @@ function PatrimonioMisto({
                 <th className="text-left font-medium">Conto titoli</th>
                 <th className="text-right font-medium">Valore</th>
                 <th className="text-right font-medium">Aliquota</th>
-                <th className="text-right font-medium">Bollo stimato</th>
+                <th className="text-right font-medium">Addebito</th>
+                <th className="text-right font-medium">Bollo/anno</th>
               </tr>
             </thead>
             <tbody>
@@ -1007,6 +1008,9 @@ function PatrimonioMisto({
                   <td className="text-right tabular-nums">{fmtEur(r.valore)}</td>
                   <td className="text-right tabular-nums text-zinc-400">
                     {(r.aliquota * 100).toFixed(2).replace(".", ",")}%
+                  </td>
+                  <td className="text-right text-xs tabular-nums text-zinc-400">
+                    {r.periodicita === "semestrale" ? `${fmtEur(r.bolloPeriodo)} × 2` : "annuale"}
                   </td>
                   <td className="text-right tabular-nums">{fmtEur(r.bollo)}</td>
                 </tr>

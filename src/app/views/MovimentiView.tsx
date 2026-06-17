@@ -133,6 +133,13 @@ export function MovimentiView() {
               <span className="text-xs text-zinc-500">bollo/anno </span>
               <span className="font-medium">{fmtEur(bolloRiga.bollo)}</span>
             </span>
+            {bolloRiga.periodicita === "semestrale" && (
+              <span className="tabular-nums">
+                <span className="text-xs text-zinc-500">semestrale </span>
+                <span className="font-medium">{fmtEur(bolloRiga.bolloPeriodo)}</span>
+                <span className="text-xs text-zinc-500"> × 2</span>
+              </span>
+            )}
           </div>
         )}
       </section>

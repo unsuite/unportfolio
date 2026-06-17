@@ -1,7 +1,11 @@
 import { Settings } from "lucide-react";
 import { useState } from "react";
 import { sanitizeAccountSegment } from "../../core/import/mapping";
-import { DEFAULT_BOLLO_ALIQUOTA, type Deposito } from "../../core/model/config";
+import {
+  type BolloPeriodicita,
+  DEFAULT_BOLLO_ALIQUOTA,
+  type Deposito,
+} from "../../core/model/config";
 import { useApp } from "../store/selectors";
 import { deleteDeposito, renameDeposito, upsertDeposito } from "../store/store";
 
@@ -45,6 +49,9 @@ export function DepositoForm({
   const [aliquotaPct, setAliquotaPct] = useState(
     String(((deposito?.aliquota ?? DEFAULT_BOLLO_ALIQUOTA) * 100).toFixed(3)).replace(/\.?0+$/, ""),
   );
+  const [periodicita, setPeriodicita] = useState<BolloPeriodicita>(
+    deposito?.periodicita ?? "annuale",
+  );
   const [err, setErr] = useState<string>();
 
   // elenchi predefiniti (datalist): valori già presenti nel modello
@@ -86,6 +93,7 @@ export function DepositoForm({
       owner: owner.trim(),
       broker: broker.trim(),
       aliquota,
+      periodicita,
     });
     onSaved(finalId);
   }
@@ -117,7 +125,7 @@ export function DepositoForm({
           <option key={b} value={b} />
         ))}
       </datalist>
-      <div className="grid grid-cols-[1.3fr_1fr_0.9fr_0.7fr] gap-2">
+      <div className="grid grid-cols-[1.3fr_1fr_0.9fr_0.6fr_0.8fr] gap-2">
         <label className="block">
           <span className="text-xs text-zinc-500">Nome</span>
           <input
@@ -153,6 +161,17 @@ export function DepositoForm({
             inputMode="decimal"
             className="mt-0.5 w-full rounded border border-zinc-700 bg-zinc-800 px-2 py-1 text-right tabular-nums"
           />
+        </label>
+        <label className="block">
+          <span className="text-xs text-zinc-500">Addebito</span>
+          <select
+            value={periodicita}
+            onChange={(e) => setPeriodicita(e.target.value as BolloPeriodicita)}
+            className="mt-0.5 w-full rounded border border-zinc-700 bg-zinc-800 px-2 py-1"
+          >
+            <option value="annuale">Annuale</option>
+            <option value="semestrale">Semestrale</option>
+          </select>
         </label>
       </div>
       <label className="mt-2 flex items-center gap-2">

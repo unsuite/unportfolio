@@ -254,6 +254,7 @@ export function parseConfig(text: string): AppConfig {
               owner: asString(d["owner"]) ?? "",
               broker: asString(d["broker"]) ?? "",
               aliquota: asNumber(d["aliquota"]) ?? DEFAULT_BOLLO_ALIQUOTA,
+              periodicita: asString(d["periodicita"]) === "semestrale" ? "semestrale" : "annuale",
             };
             return dep;
           })
@@ -334,6 +335,7 @@ export function serializeConfig(cfg: AppConfig): string {
       owner: d.owner,
       broker: d.broker,
       aliquota: d.aliquota,
+      periodicita: d.periodicita,
     }));
   }
   o["prezzi"] = { anni: cfg.storicoAnni, intervallo: cfg.storicoIntervallo };

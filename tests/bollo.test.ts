@@ -32,12 +32,18 @@ function row(
   return r;
 }
 
-const dep = (id: string, owner: string, aliquota: number): Deposito => ({
+const dep = (
+  id: string,
+  owner: string,
+  aliquota: number,
+  periodicita: Deposito["periodicita"] = "annuale",
+): Deposito => ({
   id,
   nome: `Directa — ${owner}`,
   owner,
   broker: "Directa",
   aliquota,
+  periodicita,
 });
 
 describe("deriveBolloTitoli", () => {
@@ -94,5 +100,15 @@ describe("deriveBolloTitoli", () => {
     const { righe } = deriveBolloTitoli({ rows, depositi: [], when: "live" });
     expect(righe[0]!.aliquota).toBe(0.002);
     expect(righe[0]!.bollo.toNumber()).toBe(2);
+    expect(righe[0]!.periodicita).toBe("annuale");
+    expect(righe[0]!.bolloPeriodo.toNumber()).toBe(2);
+  });
+
+  it("periodicità semestrale: addebito = metà del bollo annuo", () => {
+    const depositi = [dep("DG", "Gabriele", 0.002, "semestrale")];
+    const rows = [row("a", "DG", {}, 10000)];
+    const { righe } = deriveBolloTitoli({ rows, depositi, when: "live" });
+    expect(righe[0]!.bollo.toNumber()).toBe(20); // annuo invariato
+    expect(righe[0]!.bolloPeriodo.toNumber()).toBe(10); // 20 / 2
   });
 });

@@ -27,16 +27,23 @@ export type Sezione = "debt" | "credit" | "cash" | "asset";
  * rinomina. Per il deposito pre-esistente resta `Directa`, così lo storico
  * combacia senza riscritture.
  */
+/** Cadenza di addebito del bollo titoli da parte del broker. */
+export type BolloPeriodicita = "annuale" | "semestrale";
+
 export interface Deposito {
   id: string; // = segmento di account ledger (es. "Directa", "DirectaAlessandra")
   nome: string; // etichetta leggibile
   owner: string;
   broker: string; // attributo descrittivo; più depositi possono condividerlo
   aliquota: number; // frazione annua del bollo titoli (default 0.002 = 0,20%)
+  periodicita: BolloPeriodicita; // cadenza di addebito (default annuale)
 }
 
 /** aliquota di bollo titoli di default: 0,20% annuo (2 per mille). */
 export const DEFAULT_BOLLO_ALIQUOTA = 0.002;
+
+/** numero di addebiti l'anno per periodicità. */
+export const BOLLO_PERIODI: Record<BolloPeriodicita, number> = { annuale: 1, semestrale: 2 };
 
 /** Split percentuale per asset class di un account composito (es. fondo pensione). */
 export interface AccountSplit {

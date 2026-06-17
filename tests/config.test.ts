@@ -150,11 +150,12 @@ aliquota = 0.001
       owner: "Gabriele",
       broker: "Directa",
       aliquota: 0.002,
+      periodicita: "annuale",
     });
     expect(cfg.depositi[1]?.aliquota).toBe(0.001);
   });
 
-  it("aliquota di default quando manca", () => {
+  it("aliquota e periodicità di default quando mancano", () => {
     const cfg = parseConfig(`
 [[deposito]]
 id = "Directa"
@@ -163,6 +164,19 @@ owner = "Gabriele"
 broker = "Directa"
 `);
     expect(cfg.depositi[0]?.aliquota).toBe(0.002);
+    expect(cfg.depositi[0]?.periodicita).toBe("annuale");
+  });
+
+  it("legge la periodicità semestrale", () => {
+    const cfg = parseConfig(`
+[[deposito]]
+id = "Directa"
+nome = "Directa"
+owner = "Gabriele"
+broker = "Directa"
+periodicita = "semestrale"
+`);
+    expect(cfg.depositi[0]?.periodicita).toBe("semestrale");
   });
 
   it("array vuoto se la sezione manca", () => {
@@ -178,6 +192,7 @@ broker = "Directa"
         owner: "Gabriele",
         broker: "Directa",
         aliquota: 0.002,
+        periodicita: "annuale",
       },
       {
         id: "DirectaAlessandra",
@@ -185,6 +200,7 @@ broker = "Directa"
         owner: "Alessandra",
         broker: "Directa",
         aliquota: 0.0015,
+        periodicita: "semestrale",
       },
     ];
     const round = parseConfig(serializeConfig(cfg));
