@@ -129,17 +129,22 @@ export function MovimentiView() {
               <span className="text-xs text-zinc-500">aliquota </span>
               {pctFmt.format(bolloRiga.aliquota)}
             </span>
-            <span className="tabular-nums">
-              <span className="text-xs text-zinc-500">bollo/anno </span>
-              <span className="font-medium">{fmtEur(bolloRiga.bollo)}</span>
-            </span>
-            {bolloRiga.periodicita === "semestrale" && (
-              <span className="tabular-nums">
-                <span className="text-xs text-zinc-500">semestrale </span>
+            {bolloRiga.periodi > 1 && (
+              <span
+                className="tabular-nums"
+                title="Stima del singolo addebito sul valore attuale: cambia se acquisti/vendi titoli prima della scadenza del periodo."
+              >
+                <span className="text-xs text-zinc-500">
+                  per addebito ({bolloRiga.periodicita}){" "}
+                </span>
                 <span className="font-medium">{fmtEur(bolloRiga.bolloPeriodo)}</span>
-                <span className="text-xs text-zinc-500"> × 2</span>
+                <span className="text-xs text-zinc-500"> × {bolloRiga.periodi}</span>
               </span>
             )}
+            <span className="tabular-nums">
+              <span className="text-xs text-zinc-500">stima annua </span>
+              <span className="font-medium">{fmtEur(bolloRiga.bollo)}</span>
+            </span>
           </div>
         )}
       </section>

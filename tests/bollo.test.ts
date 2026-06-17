@@ -109,6 +109,16 @@ describe("deriveBolloTitoli", () => {
     const rows = [row("a", "DG", {}, 10000)];
     const { righe } = deriveBolloTitoli({ rows, depositi, when: "live" });
     expect(righe[0]!.bollo.toNumber()).toBe(20); // annuo invariato
+    expect(righe[0]!.periodi).toBe(2);
     expect(righe[0]!.bolloPeriodo.toNumber()).toBe(10); // 20 / 2
+  });
+
+  it("periodicità trimestrale: addebito = un quarto del bollo annuo", () => {
+    const depositi = [dep("DG", "Gabriele", 0.002, "trimestrale")];
+    const rows = [row("a", "DG", {}, 10000)];
+    const { righe } = deriveBolloTitoli({ rows, depositi, when: "live" });
+    expect(righe[0]!.bollo.toNumber()).toBe(20); // annuo invariato
+    expect(righe[0]!.periodi).toBe(4);
+    expect(righe[0]!.bolloPeriodo.toNumber()).toBe(5); // 20 / 4
   });
 });

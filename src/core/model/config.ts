@@ -28,7 +28,7 @@ export type Sezione = "debt" | "credit" | "cash" | "asset";
  * combacia senza riscritture.
  */
 /** Cadenza di addebito del bollo titoli da parte del broker. */
-export type BolloPeriodicita = "annuale" | "semestrale";
+export type BolloPeriodicita = "annuale" | "semestrale" | "trimestrale";
 
 export interface Deposito {
   id: string; // = segmento di account ledger (es. "Directa", "DirectaAlessandra")
@@ -43,7 +43,11 @@ export interface Deposito {
 export const DEFAULT_BOLLO_ALIQUOTA = 0.002;
 
 /** numero di addebiti l'anno per periodicità. */
-export const BOLLO_PERIODI: Record<BolloPeriodicita, number> = { annuale: 1, semestrale: 2 };
+export const BOLLO_PERIODI: Record<BolloPeriodicita, number> = {
+  annuale: 1,
+  semestrale: 2,
+  trimestrale: 4,
+};
 
 /** Split percentuale per asset class di un account composito (es. fondo pensione). */
 export interface AccountSplit {

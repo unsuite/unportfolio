@@ -28,6 +28,8 @@ export interface BolloRiga {
   aliquota: number;
   /** cadenza di addebito */
   periodicita: BolloPeriodicita;
+  /** numero di addebiti l'anno (1 annuale, 2 semestrale, 4 trimestrale) */
+  periodi: number;
   /** bollo annuo stimato = valore × aliquota */
   bollo: Decimal;
   /** bollo per singolo addebito = bollo annuo / numero di periodi */
@@ -78,6 +80,7 @@ export function deriveBolloTitoli(input: DeriveBolloInput): BolloStatement {
     const dep = byDeposito.get(id);
     const aliquota = dep?.aliquota ?? defaultAliquota;
     const periodicita = dep?.periodicita ?? "annuale";
+    const periodi = BOLLO_PERIODI[periodicita];
     const valore = valori.get(id) ?? ZERO;
     const bollo = valore.mul(aliquota);
     totale = totale.add(bollo);
@@ -88,8 +91,9 @@ export function deriveBolloTitoli(input: DeriveBolloInput): BolloStatement {
       valore,
       aliquota,
       periodicita,
+      periodi,
       bollo,
-      bolloPeriodo: bollo.div(BOLLO_PERIODI[periodicita]),
+      bolloPeriodo: bollo.div(periodi),
     });
   }
   righe.sort((a, b) => b.valore.comparedTo(a.valore) || a.id.localeCompare(b.id));

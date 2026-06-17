@@ -254,7 +254,12 @@ export function parseConfig(text: string): AppConfig {
               owner: asString(d["owner"]) ?? "",
               broker: asString(d["broker"]) ?? "",
               aliquota: asNumber(d["aliquota"]) ?? DEFAULT_BOLLO_ALIQUOTA,
-              periodicita: asString(d["periodicita"]) === "semestrale" ? "semestrale" : "annuale",
+              periodicita:
+                asString(d["periodicita"]) === "semestrale"
+                  ? "semestrale"
+                  : asString(d["periodicita"]) === "trimestrale"
+                    ? "trimestrale"
+                    : "annuale",
             };
             return dep;
           })

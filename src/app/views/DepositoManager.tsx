@@ -171,6 +171,7 @@ export function DepositoForm({
           >
             <option value="annuale">Annuale</option>
             <option value="semestrale">Semestrale</option>
+            <option value="trimestrale">Trimestrale</option>
           </select>
         </label>
       </div>

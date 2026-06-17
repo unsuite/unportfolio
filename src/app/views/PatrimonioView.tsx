@@ -1010,7 +1010,7 @@ function PatrimonioMisto({
                     {(r.aliquota * 100).toFixed(2).replace(".", ",")}%
                   </td>
                   <td className="text-right text-xs tabular-nums text-zinc-400">
-                    {r.periodicita === "semestrale" ? `${fmtEur(r.bolloPeriodo)} × 2` : "annuale"}
+                    {r.periodi > 1 ? `${fmtEur(r.bolloPeriodo)} × ${r.periodi}` : "annuale"}
                   </td>
                   <td className="text-right tabular-nums">{fmtEur(r.bollo)}</td>
                 </tr>
