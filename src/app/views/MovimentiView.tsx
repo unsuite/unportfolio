@@ -4,7 +4,7 @@ import { deriveBolloTitoli } from "../../core/derive/bollo";
 import type { ImportFile } from "../../core/import/types";
 import { applyImport, type ImportPreview, previewImport } from "../store/importFlow";
 import { fmtEur, useApp, useDerived } from "../store/selectors";
-import { notify } from "../store/store";
+import { notify, renameDeposito } from "../store/store";
 import { DepositoPicker } from "./DepositoManager";
 
 const pctFmt = new Intl.NumberFormat("it-IT", { style: "percent", maximumFractionDigits: 2 });
@@ -72,6 +72,21 @@ export function MovimentiView() {
         when: "live",
       }).righe.find((r) => r.id === selezione)
     : undefined;
+
+  // segmenti broker presenti nel ledger ma non agganciati ad alcun conto:
+  // tipicamente movimenti importati prima dell'introduzione dei conti titoli.
+  const contoIds = new Set(s.config.depositi.map((d) => d.id));
+  const segmentCount = new Map<string, number>();
+  for (const t of transactions) {
+    const segs = new Set<string>();
+    for (const p of t.postings) {
+      const seg = depositoSegmentOf(p.account);
+      if (seg) segs.add(seg);
+    }
+    for (const seg of segs)
+      if (!contoIds.has(seg)) segmentCount.set(seg, (segmentCount.get(seg) ?? 0) + 1);
+  }
+  const orphanSegments = [...segmentCount.entries()].sort((a, b) => b[1] - a[1]);
 
   // movimenti del solo conto selezionato, poi filtro testo
   const f = filter.trim().toLowerCase();
@@ -192,6 +207,35 @@ export function MovimentiView() {
           </div>
         )}
       </section>
+
+      {/* Aggancio movimenti orfani: il conto selezionato è vuoto ma il ledger
+          contiene movimenti sotto un segmento senza conto (import pre-feature). */}
+      {selezione && rows.length === 0 && orphanSegments.length > 0 && (
+        <section className="rounded border border-amber-800/60 bg-amber-950/40 p-3 text-sm">
+          <div className="mb-2 text-amber-300">
+            Questo conto non ha movimenti, ma nel ledger ci sono movimenti non agganciati. Collegali
+            a «{s.config.depositi.find((d) => d.id === selezione)?.nome ?? selezione}»:
+          </div>
+          <div className="flex flex-wrap gap-2">
+            {orphanSegments.map(([seg, n]) => (
+              <button
+                key={seg}
+                onClick={() => {
+                  void renameDeposito(selezione, seg).then((ok) => {
+                    if (ok) setDeposito(seg);
+                  });
+                }}
+                className="rounded bg-amber-700 px-3 py-1.5 text-xs text-white hover:bg-amber-600"
+              >
+                Aggancia «{seg}» ({n} mov.)
+              </button>
+            ))}
+          </div>
+          <p className="mt-2 text-[11px] text-amber-300/70">
+            Rinomina l'id del conto al segmento scelto e riscrive i movimenti nel ledger.
+          </p>
+        </section>
+      )}
 
       {/* Lista movimenti del conto selezionato */}
       <section>
