@@ -36,6 +36,7 @@ function isWindows(): boolean {
 
 export function App() {
   const s = useApp();
+  const { canInstall, promptInstall } = useInstallPrompt();
   const [tab, setTab] = useState<Tab>("patrimonio");
   const [restore, setRestore] = useState<RestoreResult>();
 
@@ -81,6 +82,15 @@ export function App() {
               </button>
             ))}
           </nav>
+          {canInstall ? (
+            <button
+              onClick={promptInstall}
+              title="Installa l'app: il browser ricorderà il permesso sulla cartella tra i riavvii"
+              className="ml-auto rounded bg-sky-700 px-3 py-1 text-sm font-medium hover:bg-sky-600"
+            >
+              Installa l'app
+            </button>
+          ) : null}
         </div>
       </header>
       {s.notices.length > 0 && (
