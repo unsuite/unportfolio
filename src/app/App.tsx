@@ -1,11 +1,5 @@
 import { useEffect, useState } from "react";
-import {
-  opfsStore,
-  pickDirectory,
-  type RestoreResult,
-  requestPermission,
-  restoreDirectory,
-} from "./fs/fileSystem";
+import { opfsStore, pickDirectory, type RestoreResult, restoreDirectory } from "./fs/fileSystem";
 import { useApp } from "./store/selectors";
 import { dismissNotices, openStore, refreshFromDisk } from "./store/store";
 import { GoalsView } from "./views/GoalsView";
@@ -129,17 +123,16 @@ function Onboarding({ restore }: { restore: RestoreResult | undefined }) {
 
   async function regrant() {
     if (restore?.status !== "needs-permission") return;
-    console.debug("[unportfolio:fs] regrant: richiesta permesso", restore.handle.name);
+    // requestPermission() su handle ripristinati è inaffidabile (la promise può
+    // restare appesa senza mostrare il popup, e dopo ripetuti dismiss Chrome non
+    // lo propone più). Ripieghiamo sul picker: grazie all'id riapre già puntato
+    // sulla cartella e concede readwrite in modo affidabile nello stesso gesto.
+    console.debug("[unportfolio:fs] regrant: riapro via picker", restore.handle.name);
     try {
-      const store = await requestPermission(restore.handle);
-      if (!store) {
-        console.warn("[unportfolio:fs] regrant: permesso non concesso");
-        setError("Permesso non concesso: riclicca e conferma nel popup del browser.");
-        return;
-      }
-      console.debug("[unportfolio:fs] regrant: permesso concesso, apro lo store");
+      const store = await pickDirectory();
       await openStore(store);
     } catch (e) {
+      if (e instanceof DOMException && e.name === "AbortError") return;
       console.error("[unportfolio:fs] regrant: errore", e);
       setError(String(e));
     }
@@ -162,7 +155,7 @@ function Onboarding({ restore }: { restore: RestoreResult | undefined }) {
             onClick={regrant}
             className="w-full rounded bg-emerald-700 px-4 py-2 font-medium hover:bg-emerald-600"
           >
-            Riapri la cartella dati ({restore.handle.name})
+            Riapri la cartella dati… ({restore.handle.name})
           </button>
         ) : null}
         <button
