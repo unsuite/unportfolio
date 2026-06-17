@@ -1,5 +1,8 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
+import type { IsoDate } from "../../core/beancount/ast";
 import { goalTarget } from "../../core/config/codecs";
+import { deriveGoalStatus } from "../../core/derive/goalStatus";
+import { portfolioCurrents } from "../../core/derive/patrimonio";
 import type { Goal } from "../../core/model/config";
 import { fmtEur, fmtPct, useApp, useDerived } from "../store/selectors";
 import { saveGoals } from "../store/store";
@@ -8,9 +11,25 @@ import { Modal } from "./Modal";
 
 export function GoalsView() {
   const s = useApp();
-  const { goalStatus } = useDerived();
+  const { patrimonio } = useDerived();
   const [editing, setEditing] = useState<Goal | "new">();
   const [showGraph, setShowGraph] = useState(true);
+  const [reference, setReference] = useState<IsoDate | "live">("live");
+
+  // Se la data di riferimento scelta sparisce (es. snapshot eliminato), torna a "live".
+  const refValid = reference === "live" || patrimonio.dates.includes(reference);
+  const ref = refValid ? reference : "live";
+
+  const goalStatus = useMemo(
+    () =>
+      deriveGoalStatus({
+        goals: s.goals,
+        currents: portfolioCurrents(patrimonio, ref),
+        priorita: s.config.priorita,
+        flussi: s.config.esuberoFlussi,
+      }),
+    [patrimonio, ref, s.goals, s.config.priorita, s.config.esuberoFlussi],
+  );
 
   if (s.goals.length === 0 && !editing) {
     return (
@@ -48,7 +67,27 @@ export function GoalsView() {
       </section>
 
       <section>
-        <h2 className="mb-2 text-lg font-semibold">Goal Status — esubero a cascata</h2>
+        <div className="mb-2 flex items-center gap-3">
+          <h2 className="text-lg font-semibold">Goal Status — esubero a cascata</h2>
+          <label className="flex items-center gap-2 text-sm text-zinc-400">
+            <span>Riferimento</span>
+            <select
+              value={ref}
+              onChange={(e) => setReference(e.target.value as IsoDate | "live")}
+              className="rounded border border-zinc-700 bg-zinc-800 px-2 py-1 text-zinc-200"
+            >
+              <option value="live">Live (oggi)</option>
+              {[...patrimonio.dates].reverse().map((d) => (
+                <option key={d} value={d}>
+                  {d}
+                </option>
+              ))}
+            </select>
+          </label>
+          {ref !== "live" && (
+            <span className="text-xs text-zinc-500">valori al {ref} invece dei correnti</span>
+          )}
+        </div>
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b border-zinc-700 text-left text-zinc-400 [&>th]:px-2 [&>th]:py-1.5 [&>th]:font-medium">
