@@ -7,12 +7,7 @@ import {
   deriveAssets,
   readCommodityInfo,
 } from "../../core/derive/assets";
-import { deriveGoalStatus, type PortfolioStatus } from "../../core/derive/goalStatus";
-import {
-  derivePatrimonio,
-  type PatrimonioStatement,
-  portfolioCurrents,
-} from "../../core/derive/patrimonio";
+import { derivePatrimonio, type PatrimonioStatement } from "../../core/derive/patrimonio";
 import { buildPriceTable, type PriceTable } from "../../core/derive/prices";
 import { type AppState, allDirectives, getState, subscribe } from "./store";
 
@@ -30,7 +25,6 @@ export interface Derived {
   commodities: Map<string, CommodityInfo>;
   assets: AssetRow[];
   patrimonio: PatrimonioStatement;
-  goalStatus: PortfolioStatus[];
   transactions: TransactionDirective[];
   asOf: string;
 }
@@ -58,12 +52,6 @@ export function useDerived(): Derived {
       liveQuotes: s.quotes,
       asOf,
     });
-    const goalStatus = deriveGoalStatus({
-      goals: s.goals,
-      currents: portfolioCurrents(patrimonio, "live"),
-      priorita: s.config.priorita,
-      flussi: s.config.esuberoFlussi,
-    });
     const transactions = directives.filter(
       (d): d is TransactionDirective => d.kind === "transaction",
     );
@@ -73,7 +61,6 @@ export function useDerived(): Derived {
       commodities,
       assets,
       patrimonio,
-      goalStatus,
       transactions,
       asOf,
     };

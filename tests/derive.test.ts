@@ -186,6 +186,12 @@ describe("patrimonio", () => {
     expect(currents.get("Liquidità - Gabriele")!.toNumber()).toBe(1200);
     expect(currents.get("Investimento a lungo - Plinio 14")!.toNumber()).toBe(1250);
   });
+
+  it("aggregates currents at a reference snapshot date", () => {
+    const currents = portfolioCurrents(statement, "2025-03-31");
+    expect(currents.get("Liquidità - Gabriele")!.toNumber()).toBe(997.52);
+    expect(currents.get("Investimento a lungo - Plinio 14")!.toNumber()).toBe(1100);
+  });
 });
 
 describe("goal status waterfall (valori del foglio, colonna Q4 2024)", () => {

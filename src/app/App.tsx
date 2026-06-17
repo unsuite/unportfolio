@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { opfsStore, pickDirectory, type RestoreResult, restoreDirectory } from "./fs/fileSystem";
+import { useInstallPrompt } from "./pwa/install";
 import { useApp } from "./store/selectors";
 import { dismissNotices, openStore, refreshFromDisk } from "./store/store";
 import { GoalsView } from "./views/GoalsView";
@@ -109,6 +110,7 @@ export function App() {
 
 function Onboarding({ restore }: { restore: RestoreResult | undefined }) {
   const s = useApp();
+  const { canInstall, promptInstall } = useInstallPrompt();
   const [error, setError] = useState<string>();
   const [win, setWin] = useState(isWindows);
 
@@ -157,6 +159,20 @@ function Onboarding({ restore }: { restore: RestoreResult | undefined }) {
           >
             Riapri la cartella dati… ({restore.handle.name})
           </button>
+        ) : null}
+        {canInstall ? (
+          <div className="rounded border border-sky-900 bg-sky-950/50 p-3">
+            <button
+              onClick={promptInstall}
+              className="w-full rounded bg-sky-700 px-4 py-2 font-medium hover:bg-sky-600"
+            >
+              Installa l'app
+            </button>
+            <p className="mt-2 text-xs text-sky-300/80">
+              Installandola, il browser ricorda il permesso sulla cartella: niente più "riapri" a
+              ogni avvio.
+            </p>
+          </div>
         ) : null}
         <button
           onClick={pick}
