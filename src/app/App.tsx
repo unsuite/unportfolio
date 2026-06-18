@@ -1,5 +1,11 @@
 import { useEffect, useState } from "react";
-import { opfsStore, pickDirectory, type RestoreResult, restoreDirectory } from "./fs/fileSystem";
+import {
+  opfsStore,
+  pickDirectory,
+  type RestoreResult,
+  requestPermission,
+  restoreDirectory,
+} from "./fs/fileSystem";
 import { useInstallPrompt } from "./pwa/install";
 import { useApp } from "./store/selectors";
 import { dismissNotices, openStore, refreshFromDisk } from "./store/store";
@@ -120,30 +126,45 @@ function Onboarding({ restore }: { restore: RestoreResult | undefined }) {
   const { canInstall, promptInstall } = useInstallPrompt();
   const [error, setError] = useState<string>();
   const [win, setWin] = useState(isWindows);
+  const [busy, setBusy] = useState(false);
+  // Su requestPermission() andato a vuoto (denied/prompt senza esito) offriamo
+  // il picker come fallback esplicito, invece di aprirlo automaticamente.
+  const [pickerFallback, setPickerFallback] = useState(false);
 
   async function pick() {
+    if (busy) return;
+    setBusy(true);
     try {
       const store = await pickDirectory();
       await openStore(store);
     } catch (e) {
       if (!(e instanceof DOMException && e.name === "AbortError")) setError(String(e));
+    } finally {
+      setBusy(false);
     }
   }
 
   async function regrant() {
-    if (restore?.status !== "needs-permission") return;
-    // requestPermission() su handle ripristinati è inaffidabile (la promise può
-    // restare appesa senza mostrare il popup, e dopo ripetuti dismiss Chrome non
-    // lo propone più). Ripieghiamo sul picker: grazie all'id riapre già puntato
-    // sulla cartella e concede readwrite in modo affidabile nello stesso gesto.
-    console.debug("[unportfolio:fs] regrant: riapro via picker", restore.handle.name);
+    if (restore?.status !== "needs-permission" || busy) return;
+    // Via primaria: requestPermission() sull'handle salvato. È l'API pensata per
+    // ri-concedere il permesso senza riaprire il file picker — fondamentale su
+    // browser (es. Arc) dove showDirectoryPicker resta appeso senza mostrare nulla.
+    setBusy(true);
     try {
-      const store = await pickDirectory();
-      await openStore(store);
+      console.debug("[unportfolio:fs] regrant: requestPermission", restore.handle.name);
+      const store = await requestPermission(restore.handle);
+      if (store) {
+        await openStore(store);
+        return;
+      }
+      // Permesso non concesso: proponiamo il picker come fallback manuale.
+      setPickerFallback(true);
     } catch (e) {
-      if (e instanceof DOMException && e.name === "AbortError") return;
       console.error("[unportfolio:fs] regrant: errore", e);
       setError(String(e));
+      setPickerFallback(true);
+    } finally {
+      setBusy(false);
     }
   }
 
@@ -160,12 +181,24 @@ function Onboarding({ restore }: { restore: RestoreResult | undefined }) {
           beancount + TOML/CSV) che scegli tu.
         </p>
         {restore?.status === "needs-permission" ? (
-          <button
-            onClick={regrant}
-            className="w-full rounded bg-emerald-700 px-4 py-2 font-medium hover:bg-emerald-600"
-          >
-            Riapri la cartella dati… ({restore.handle.name})
-          </button>
+          <div className="space-y-2">
+            <button
+              onClick={regrant}
+              disabled={busy}
+              className="w-full rounded bg-emerald-700 px-4 py-2 font-medium hover:bg-emerald-600 disabled:opacity-50"
+            >
+              Riapri la cartella dati… ({restore.handle.name})
+            </button>
+            {pickerFallback ? (
+              <button
+                onClick={pick}
+                disabled={busy}
+                className="w-full rounded border border-emerald-800 px-4 py-2 text-sm text-emerald-300 hover:bg-emerald-950 disabled:opacity-50"
+              >
+                Non si apre? Riprova scegliendo la cartella…
+              </button>
+            ) : null}
+          </div>
         ) : null}
         {canInstall ? (
           <div className="rounded border border-sky-900 bg-sky-950/50 p-3">
