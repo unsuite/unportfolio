@@ -138,13 +138,29 @@ async function opfsBackupDir(): Promise<FileSystemDirectoryHandle | undefined> {
 
 /** Ask the user to pick the data directory; persist the handle. */
 export async function pickDirectory(): Promise<DataStore> {
-  const root = await window.showDirectoryPicker({
-    mode: "readwrite",
-    id: "unportfolio-data",
-    startIn: "documents",
-  });
+  // Niente `id`/`startIn`: su alcuni browser (es. Arc) quelle opzioni fanno
+  // restare appeso showDirectoryPicker; la forma nuda è quella che apre sempre.
+  const root = await window.showDirectoryPicker({ mode: "readwrite" });
   await idbSet("dataDir", root);
   return new DataStore("fsa", root, await opfsBackupDir());
+}
+
+/**
+ * Sblocco/reset lato client: dimentica l'handle salvato (su browser che non
+ * persistono il permesso FSA, es. Arc, il re-grant si pianta: meglio ripartire
+ * da una scelta pulita) e rimuove service worker + cache così al reload gira la
+ * build aggiornata. NON tocca l'OPFS: dati demo e backup di sicurezza restano.
+ */
+export async function resetClientState(): Promise<void> {
+  await forgetDirectory();
+  if ("serviceWorker" in navigator) {
+    const regs = await navigator.serviceWorker.getRegistrations();
+    await Promise.all(regs.map((r) => r.unregister()));
+  }
+  if ("caches" in window) {
+    const keys = await caches.keys();
+    await Promise.all(keys.map((k) => caches.delete(k)));
+  }
 }
 
 /** Dimentica l'handle persistito: al prossimo avvio si torna all'onboarding. */

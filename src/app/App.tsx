@@ -4,6 +4,7 @@ import {
   pickDirectory,
   type RestoreResult,
   requestPermission,
+  resetClientState,
   restoreDirectory,
 } from "./fs/fileSystem";
 import { useInstallPrompt } from "./pwa/install";
@@ -184,6 +185,11 @@ function Onboarding({ restore }: { restore: RestoreResult | undefined }) {
     await openStore(await opfsStore());
   }
 
+  async function unblock() {
+    await resetClientState();
+    window.location.reload();
+  }
+
   return (
     <div className="flex min-h-screen items-center justify-center bg-zinc-950 text-zinc-100">
       <div className="w-full max-w-md space-y-4 rounded-lg border border-zinc-800 bg-zinc-900 p-8">
@@ -202,11 +208,20 @@ function Onboarding({ restore }: { restore: RestoreResult | undefined }) {
               Riapri la cartella dati… ({restore.handle.name})
             </button>
             {stuckHint ? (
-              <p className="text-xs text-amber-400/90">
-                Il browser non ha mostrato il popup del permesso? Usa "Scegli la cartella dati…" qui
-                sotto. Alcuni browser (es. Arc) non ricordano il permesso: per non ri-autorizzare a
-                ogni avvio apri unportfolio in Chrome/Edge e installa l'app.
-              </p>
+              <div className="space-y-2">
+                <p className="text-xs text-amber-400/90">
+                  Il browser non ha mostrato il popup del permesso? Sblocca e riparti da una scelta
+                  pulita col bottone qui sotto, oppure usa "Scegli la cartella dati…". Alcuni
+                  browser (es. Arc) non ricordano il permesso tra i riavvii: per non ri-autorizzare
+                  ogni volta apri unportfolio in Chrome/Edge e installa l'app.
+                </p>
+                <button
+                  onClick={unblock}
+                  className="w-full rounded border border-amber-800 px-4 py-2 text-sm text-amber-300 hover:bg-amber-950"
+                >
+                  Sblocca: dimentica e ricarica
+                </button>
+              </div>
             ) : null}
           </div>
         ) : null}
