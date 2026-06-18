@@ -126,30 +126,35 @@ function Onboarding({ restore }: { restore: RestoreResult | undefined }) {
   const { canInstall, promptInstall } = useInstallPrompt();
   const [error, setError] = useState<string>();
   const [win, setWin] = useState(isWindows);
-  const [busy, setBusy] = useState(false);
-  // Su requestPermission() andato a vuoto (denied/prompt senza esito) offriamo
-  // il picker come fallback esplicito, invece di aprirlo automaticamente.
-  const [pickerFallback, setPickerFallback] = useState(false);
+  // Flag separati: una promessa appesa di un'azione non deve bloccare le altre.
+  const [regranting, setRegranting] = useState(false);
+  const [picking, setPicking] = useState(false);
+  // Su alcuni browser (es. Arc) requestPermission()/showDirectoryPicker possono
+  // restare appesi senza mostrare alcun popup: dopo un attimo mostriamo una via
+  // d'uscita (picker esplicito o suggerimento di usare Chrome/Edge).
+  const [stuckHint, setStuckHint] = useState(false);
 
   async function pick() {
-    if (busy) return;
-    setBusy(true);
+    if (picking) return;
+    setPicking(true);
     try {
       const store = await pickDirectory();
       await openStore(store);
     } catch (e) {
       if (!(e instanceof DOMException && e.name === "AbortError")) setError(String(e));
     } finally {
-      setBusy(false);
+      setPicking(false);
     }
   }
 
   async function regrant() {
-    if (restore?.status !== "needs-permission" || busy) return;
-    // Via primaria: requestPermission() sull'handle salvato. È l'API pensata per
-    // ri-concedere il permesso senza riaprire il file picker — fondamentale su
-    // browser (es. Arc) dove showDirectoryPicker resta appeso senza mostrare nulla.
-    setBusy(true);
+    if (restore?.status !== "needs-permission" || regranting) return;
+    // Via primaria: requestPermission() sull'handle salvato — ri-concede il
+    // permesso senza riaprire il picker. Se entro 1.5s non risolve (popup mai
+    // mostrato), riveliamo la via d'uscita senza congelare la UI.
+    setRegranting(true);
+    setStuckHint(false);
+    const timer = window.setTimeout(() => setStuckHint(true), 1500);
     try {
       console.debug("[unportfolio:fs] regrant: requestPermission", restore.handle.name);
       const store = await requestPermission(restore.handle);
@@ -157,14 +162,14 @@ function Onboarding({ restore }: { restore: RestoreResult | undefined }) {
         await openStore(store);
         return;
       }
-      // Permesso non concesso: proponiamo il picker come fallback manuale.
-      setPickerFallback(true);
+      setStuckHint(true);
     } catch (e) {
       console.error("[unportfolio:fs] regrant: errore", e);
       setError(String(e));
-      setPickerFallback(true);
+      setStuckHint(true);
     } finally {
-      setBusy(false);
+      window.clearTimeout(timer);
+      setRegranting(false);
     }
   }
 
@@ -184,19 +189,17 @@ function Onboarding({ restore }: { restore: RestoreResult | undefined }) {
           <div className="space-y-2">
             <button
               onClick={regrant}
-              disabled={busy}
+              disabled={regranting}
               className="w-full rounded bg-emerald-700 px-4 py-2 font-medium hover:bg-emerald-600 disabled:opacity-50"
             >
               Riapri la cartella dati… ({restore.handle.name})
             </button>
-            {pickerFallback ? (
-              <button
-                onClick={pick}
-                disabled={busy}
-                className="w-full rounded border border-emerald-800 px-4 py-2 text-sm text-emerald-300 hover:bg-emerald-950 disabled:opacity-50"
-              >
-                Non si apre? Riprova scegliendo la cartella…
-              </button>
+            {stuckHint ? (
+              <p className="text-xs text-amber-400/90">
+                Il browser non ha mostrato il popup del permesso? Usa "Scegli la cartella dati…" qui
+                sotto. Alcuni browser (es. Arc) non ricordano il permesso: per non ri-autorizzare a
+                ogni avvio apri unportfolio in Chrome/Edge e installa l'app.
+              </p>
             ) : null}
           </div>
         ) : null}
@@ -216,7 +219,8 @@ function Onboarding({ restore }: { restore: RestoreResult | undefined }) {
         ) : null}
         <button
           onClick={pick}
-          className="w-full rounded bg-zinc-700 px-4 py-2 font-medium hover:bg-zinc-600"
+          disabled={picking}
+          className="w-full rounded bg-zinc-700 px-4 py-2 font-medium hover:bg-zinc-600 disabled:opacity-50"
         >
           Scegli la cartella dati…
         </button>
