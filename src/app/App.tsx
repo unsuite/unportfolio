@@ -9,6 +9,7 @@ import {
 import { useInstallPrompt } from "./pwa/install";
 import { useApp } from "./store/selectors";
 import { dismissNotices, openStore, refreshFromDisk } from "./store/store";
+import { VersionFooter } from "./VersionFooter";
 import { GoalsView } from "./views/GoalsView";
 import { GuidaView } from "./views/GuidaView";
 import { MovimentiView } from "./views/MovimentiView";
@@ -63,7 +64,12 @@ export function App() {
   }, []);
 
   if (!s.store) {
-    return <Onboarding restore={restore} />;
+    return (
+      <>
+        <Onboarding restore={restore} />
+        <VersionFooter />
+      </>
+    );
   }
 
   return (
@@ -117,6 +123,7 @@ export function App() {
         {tab === "impostazioni" && <SettingsView />}
         {tab === "guida" && <GuidaView />}
       </main>
+      <VersionFooter />
     </div>
   );
 }
