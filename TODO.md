@@ -100,12 +100,10 @@
       commodity), quindi rinominabile editando una sola riga in
       `accounts.beancount` senza toccare movimenti/prezzi. Nomi conto passati a
       `Assets:Broker:<broker>:<ISIN>` e `Income:CapitalGains/Coupons/Dividends:<ISIN>`.
-      Migrazione one-shot dei ledger esistenti via `scripts/migrate-isin.ts`
-      (rename currency + leaf conti nei 3 .beancount e nel campo `commodity` di
-      accounts.toml; backup `*.premigrate.bak`; idempotente; validata col motore
-      di booking del progetto). Eseguita sui dati reali: 11 strumenti migrati,
-      booking pulito. Sblocca l'enrichment in import. Display UI lasciato a ISIN
-      grezzo per ora (ticker-come-label = passo separato).
+      Migrazione one-shot dei ledger esistenti eseguita sui dati reali (11
+      strumenti, booking pulito); lo script di migrazione è stato rimosso dopo
+      l'uso. Sblocca l'enrichment in import. Display UI lasciato a ISIN grezzo
+      per ora (ticker-come-label = passo separato).
 
 ## UI / UX
 
