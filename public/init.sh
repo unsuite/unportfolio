@@ -115,6 +115,85 @@ put goals.toml '# obiettivi
 put snapshots.csv 'date,account_id,value,currency
 '
 
+# AGENTS.md: onboarding per un LLM che apre la cartella (duplicato in
+# src/app/fs/fileSystem.ts AGENTS_MD). Heredoc quotato: nessuna interpolazione.
+if [ ! -f "$DIR/AGENTS.md" ]; then
+  cat > "$DIR/AGENTS.md" <<'AGENTS_EOF'
+# unportfolio — cartella dati
+
+Questa cartella è il database di **unportfolio**, un'app locale per net worth,
+portafoglio e obiettivi. Nessun backend: sono file in chiaro, versionabili in
+git. Se stai analizzando questa cartella, parti da qui.
+
+## Il ledger è beancount v2 valido
+
+`ledger/` si usa senza conversioni:
+
+```sh
+bean-check ledger/main.beancount                        # valida
+bean-query ledger/main.beancount "SELECT account, sum(position)"   # interroga
+fava ledger/main.beancount                              # UI web
+```
+
+- `ledger/main.beancount` — opzioni + `include`: è il punto d'ingresso.
+- `ledger/accounts.beancount` — `open` + `commodity` (**rigenerato dall'app**, non editarlo a mano).
+- `ledger/movimenti.beancount` — transazioni (append per batch di import).
+- `ledger/prices.beancount` — direttive `price` campionate (storico prezzi).
+
+## Convenzioni (rilevanti per l'analisi)
+
+- **La commodity di ogni strumento è l'ISIN**, non il ticker; il ticker è solo
+  metadato di display (`ticker` sulla direttiva `commodity`).
+- **Bond in lotti da 100 di nominale**: 5.000 € nominali = 50 unità, così il
+  prezzo (% del nominale) è letteralmente il prezzo unitario.
+- Vendite con booking **FIFO**.
+- Metadati strumento (classe, tassa, scadenza, cedola, sorgente prezzo) sulle
+  direttive `commodity`.
+- Dedupe import via metadato `import-id`: re-importare lo stesso file non duplica.
+
+## File di configurazione (TOML/CSV)
+
+- `patrimonio.toml` — righe del Patrimonio (sezione, owner, portfolio, split).
+  L'**etichetta** mostrata di uno strumento è il campo `nome` qui.
+- `goals.toml` — obiettivi. `targets.toml` — pesi target del ribilanciamento.
+- `snapshots.csv` — saldi manuali periodici. Header: `date,account_id,value,currency`.
+- `config.toml` — `percorso_dati` (path assoluto, annotato dal CLI) e `[prezzi]`
+  (`anni`, `intervallo`) che definisce la copertura dello storico.
+
+## Aggiornare i prezzi (CLI)
+
+I prezzi si aggiornano **solo da terminale** (niente CORS/proxy): ETF via Yahoo
+(simboli risolti dall'ISIN), bond MOT via Borsa Italiana. Campiona una `price`
+per giorno/strumento in `ledger/prices.beancount`.
+
+Col binario installato (`~/.local/bin/unportfolio-prices`):
+
+```sh
+unportfolio-prices "<questa-cartella>"                              # incrementale
+unportfolio-prices "<questa-cartella>" --re-resolve                 # rifà la gara dei simboli
+unportfolio-prices "<questa-cartella>" --set X.WBIT=yahoo:WBTC.PA   # binding manuale
+```
+
+Se il binario non c'è, un solo comando lo installa (self-contained, nessun
+runtime) e aggiorna:
+
+```sh
+curl -fsSL https://unsuite.github.io/unportfolio/init.sh | sh -s -- "<questa-cartella>" --prezzi
+```
+
+Dal repo sorgente: `npx vite-node scripts/prices.ts -- <cartella>`.
+
+## Se modifichi questa cartella
+
+- Le transazioni si aggiungono in `ledger/movimenti.beancount` (append).
+- Dopo modifiche al ledger valida con `bean-check ledger/main.beancount`.
+- I prezzi si aggiornano col CLI, non a mano.
+AGENTS_EOF
+  echo "creato AGENTS.md"
+else
+  echo "esiste già AGENTS.md, non tocco"
+fi
+
 ABS_DIR=$(cd "$DIR" && pwd)
 if [ ! -f "$DIR/config.toml" ]; then
   printf 'percorso_dati = "%s"\noperating_currency = "EUR"\ndefault_broker = "Directa"\npriorita = []\n\n[prezzi]\nanni = 2\nintervallo = "1wk"\n' "$ABS_DIR" > "$DIR/config.toml"

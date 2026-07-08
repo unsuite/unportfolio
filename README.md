@@ -19,6 +19,7 @@ Se la cartella è vuota viene inizializzata con lo scheletro dei file.
 ## Cartella dati
 
 ```
+AGENTS.md                   # onboarding per LLM: cos'è la cartella, convenzioni, CLI
 ledger/main.beancount       # opzioni + include → valido per bean-check / fava
 ledger/accounts.beancount   # open + commodity (rigenerato dall'app)
 ledger/movimenti.beancount  # transazioni (append per batch di import)
