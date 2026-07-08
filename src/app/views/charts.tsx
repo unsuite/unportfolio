@@ -9,9 +9,21 @@ export const eurCompact = new Intl.NumberFormat("it-IT", {
   maximumFractionDigits: 0,
 });
 
-export function LineChart({ points }: { points: TimelinePoint[] }) {
+/** +12,3% con segno; il valore è una frazione (0,123 = +12,3%). */
+const signedPct = (v: number) => `${v >= 0 ? "+" : "−"}${(Math.abs(v) * 100).toFixed(1)}%`;
+
+export function LineChart({
+  points,
+  format = "eur",
+}: {
+  points: TimelinePoint[];
+  /** "eur" = valuta; "pct" = frazione con segno (rendimento ribasato) */
+  format?: "eur" | "pct";
+}) {
   const svgRef = useRef<SVGSVGElement>(null);
   const [hover, setHover] = useState<number | null>(null);
+  const fmtVal = format === "pct" ? signedPct : (v: number) => fmtEur(v);
+  const fmtShort = format === "pct" ? signedPct : (v: number) => eurCompact.format(v);
   if (points.length < 2)
     return (
       <div className="flex h-44 items-center justify-center text-sm text-zinc-600">
@@ -27,6 +39,8 @@ export function LineChart({ points }: { points: TimelinePoint[] }) {
   const span = max - min || 1;
   const x = (i: number) => PAD + (i / (points.length - 1)) * (W - 2 * PAD);
   const y = (v: number) => H - PAD - ((v - min) / span) * (H - 2 * PAD);
+  // linea di riferimento a 0% per il rendimento, se lo zero è nell'intervallo
+  const zeroY = format === "pct" && min < 0 && max > 0 ? y(0) : undefined;
   const path = points
     .map((p, i) => `${i === 0 ? "M" : "L"}${x(i).toFixed(1)},${y(p.value).toFixed(1)}`)
     .join(" ");
@@ -58,6 +72,17 @@ export function LineChart({ points }: { points: TimelinePoint[] }) {
           </linearGradient>
         </defs>
         <path d={area} fill="url(#area)" />
+        {zeroY !== undefined && (
+          <line
+            x1={PAD}
+            y1={zeroY}
+            x2={W - PAD}
+            y2={zeroY}
+            stroke="#52525b"
+            strokeWidth="0.75"
+            strokeDasharray="3 3"
+          />
+        )}
         <path d={path} fill="none" stroke="#10b981" strokeWidth="1.5" />
         {hp && (
           <g>
@@ -83,20 +108,115 @@ export function LineChart({ points }: { points: TimelinePoint[] }) {
           }}
         >
           <div className="text-zinc-400">{hp.date}</div>
-          <div className="font-medium tabular-nums text-zinc-100">{fmtEur(hp.value)}</div>
+          <div className="font-medium tabular-nums text-zinc-100">{fmtVal(hp.value)}</div>
         </div>
       )}
       <div className="flex justify-between text-xs text-zinc-500">
         <span>
-          {first.date} · {eurCompact.format(first.value)}
+          {first.date} · {fmtShort(first.value)}
         </span>
         <span className="text-zinc-300">
-          {last.date} · <strong>{eurCompact.format(last.value)}</strong>
+          {last.date} · <strong>{fmtShort(last.value)}</strong>
         </span>
       </div>
       <div className="flex justify-between text-xs text-zinc-600">
-        <span>min {eurCompact.format(min)}</span>
-        <span>max {eurCompact.format(max)}</span>
+        <span>min {fmtShort(min)}</span>
+        <span>max {fmtShort(max)}</span>
+      </div>
+    </div>
+  );
+}
+
+/** Grafico a due linee: capitale versato (investito) vs valore di mercato.
+ *  Il divario tra le due è il guadagno. Scala condivisa su entrambe le serie. */
+export function InvestedValueChart({
+  points,
+}: {
+  points: { date: string; invested: number; value: number }[];
+}) {
+  const svgRef = useRef<SVGSVGElement>(null);
+  const [hover, setHover] = useState<number | null>(null);
+  if (points.length < 2)
+    return (
+      <div className="flex h-44 items-center justify-center text-sm text-zinc-600">
+        servono almeno due punti (lancia il CLI prezzi per lo storico)
+      </div>
+    );
+  const W = 720;
+  const H = 176;
+  const PAD = 4;
+  const all = points.flatMap((p) => [p.invested, p.value]);
+  const min = Math.min(...all);
+  const max = Math.max(...all);
+  const span = max - min || 1;
+  const x = (i: number) => PAD + (i / (points.length - 1)) * (W - 2 * PAD);
+  const y = (v: number) => H - PAD - ((v - min) / span) * (H - 2 * PAD);
+  const line = (key: "invested" | "value") =>
+    points
+      .map((p, i) => `${i === 0 ? "M" : "L"}${x(i).toFixed(1)},${y(p[key]).toFixed(1)}`)
+      .join(" ");
+  const first = points[0]!;
+  const last = points[points.length - 1]!;
+  const onMove = (e: React.MouseEvent<SVGSVGElement>) => {
+    const rect = svgRef.current?.getBoundingClientRect();
+    if (!rect || rect.width === 0) return;
+    const ratio = Math.min(1, Math.max(0, (e.clientX - rect.left) / rect.width));
+    setHover(Math.round(ratio * (points.length - 1)));
+  };
+  const hp = hover != null ? points[hover] : undefined;
+  const hx = hover != null ? x(hover) : 0;
+  return (
+    <div className="relative">
+      <div className="mb-1 flex gap-4 text-xs text-zinc-500">
+        <span className="flex items-center gap-1">
+          <span className="inline-block h-0.5 w-3 bg-emerald-500" /> valore
+        </span>
+        <span className="flex items-center gap-1">
+          <span className="inline-block h-0.5 w-3 bg-amber-400" /> investito
+        </span>
+      </div>
+      <svg
+        ref={svgRef}
+        viewBox={`0 0 ${W} ${H}`}
+        className="w-full"
+        onMouseMove={onMove}
+        onMouseLeave={() => setHover(null)}
+      >
+        <path d={line("value")} fill="none" stroke="#10b981" strokeWidth="1.5" />
+        <path d={line("invested")} fill="none" stroke="#fbbf24" strokeWidth="1.5" />
+        {hp && (
+          <line
+            x1={hx}
+            y1={PAD}
+            x2={hx}
+            y2={H - PAD}
+            stroke="#71717a"
+            strokeWidth="0.75"
+            strokeDasharray="2 2"
+          />
+        )}
+      </svg>
+      {hp && (
+        <div
+          className="pointer-events-none absolute top-0 z-10 -translate-y-1 whitespace-nowrap rounded border border-zinc-700 bg-zinc-900/95 px-2 py-1 text-xs shadow"
+          style={{
+            left: `${(hx / W) * 100}%`,
+            transform: `translateX(${hx / W < 0.5 ? "0.5rem" : "calc(-100% - 0.5rem)"})`,
+          }}
+        >
+          <div className="text-zinc-400">{hp.date}</div>
+          <div className="tabular-nums text-emerald-400">valore {fmtEur(hp.value)}</div>
+          <div className="tabular-nums text-amber-400">investito {fmtEur(hp.invested)}</div>
+          <div className="tabular-nums text-zinc-100">
+            guadagno {fmtEur(hp.value - hp.invested)}
+          </div>
+        </div>
+      )}
+      <div className="flex justify-between text-xs text-zinc-500">
+        <span>{first.date}</span>
+        <span className="text-zinc-300">
+          {last.date} · guadagno <strong>{eurCompact.format(last.value - last.invested)}</strong>
+        </span>
       </div>
     </div>
   );

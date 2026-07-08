@@ -1,13 +1,14 @@
 import { Decimal } from "decimal.js";
 import { ChevronsDownUp, ChevronsUpDown, Pencil, Plus } from "lucide-react";
-import { Fragment, useMemo, useState } from "react";
-import type { IsoDate } from "../../core/beancount/ast";
+import { Fragment, type ReactNode, useMemo, useState } from "react";
+import type { IsoDate, TransactionDirective } from "../../core/beancount/ast";
 import { book, holdingKey } from "../../core/beancount/booking";
 import { type AssetRow, type CommodityInfo, deriveAssets } from "../../core/derive/assets";
 import { deriveBolloTitoli } from "../../core/derive/bollo";
 import { deriveManualReturn } from "../../core/derive/manualReturn";
 import type { PatrimonioRow, PatrimonioStatement } from "../../core/derive/patrimonio";
 import type { PriceTable } from "../../core/derive/prices";
+import { deriveReturns } from "../../core/derive/returns";
 import {
   deriveGroupStats,
   deriveValueSeries,
@@ -18,11 +19,20 @@ import { fmtEur, fmtNum, fmtPct, useApp, useDerived } from "../store/selectors";
 import { allDirectives } from "../store/store";
 import { gainColor, holdingLabel, NameEditor, TaxEditInline } from "./AssetDetail";
 import { ContoForm } from "./ContoForm";
-import { AllocationBars, type GroupStats, LineChart } from "./charts";
+import { AllocationBars, type GroupStats, InvestedValueChart, LineChart } from "./charts";
 import { Modal } from "./Modal";
 import { ManualSnapshotEditor, SnapshotForm } from "./SnapshotForm";
 
 type GroupBy = "globale" | "assetclass" | "tracciamento" | "owner" | "portfolio";
+
+/** Modalità del grafico di gruppo: valore assoluto, rendimento total-return
+ *  (ribasato alla finestra), o capitale investito vs valore di mercato. */
+type ChartMode = "valore" | "rendimento" | "investito";
+const CHART_MODES: { key: ChartMode; label: string }[] = [
+  { key: "valore", label: "Valore" },
+  { key: "rendimento", label: "Rendimento" },
+  { key: "investito", label: "Investito" },
+];
 
 /** Finestra temporale del grafico (quanto indietro mostrare). */
 type ChartRange = "1m" | "3m" | "6m" | "1a" | "ytd" | "max";
@@ -49,6 +59,84 @@ function chartCutoff(range: ChartRange, anchor: IsoDate): IsoDate | undefined {
   const ny = Math.floor(total / 12);
   const nm = (total % 12) + 1;
   return `${ny}-${String(nm).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
+}
+
+/** Ritaglia una serie datata alla finestra: a destra su `when`, a sinistra su
+ *  `range` (ancorato all'ultimo punto visibile). */
+function windowByRange<T extends { date: IsoDate }>(
+  arr: T[],
+  when: IsoDate | "live",
+  range: ChartRange,
+): T[] {
+  const upto = when === "live" ? arr : arr.filter((p) => p.date <= when);
+  const cutoff = upto.length ? chartCutoff(range, upto[upto.length - 1]!.date) : undefined;
+  return cutoff ? upto.filter((p) => p.date >= cutoff) : upto;
+}
+
+/** Mini segmented control in alto a destra del grafico. */
+function ChartModeToggle({
+  mode,
+  onChange,
+}: {
+  mode: ChartMode;
+  onChange: (m: ChartMode) => void;
+}) {
+  return (
+    <div className="flex overflow-hidden rounded border border-zinc-700">
+      {CHART_MODES.map((m) => (
+        <button
+          key={m.key}
+          onClick={() => onChange(m.key)}
+          className={`px-2 py-0.5 text-xs ${
+            mode === m.key
+              ? "bg-zinc-700 text-zinc-100"
+              : "bg-zinc-900 text-zinc-400 hover:bg-zinc-800"
+          }`}
+        >
+          {m.label}
+        </button>
+      ))}
+    </div>
+  );
+}
+
+/** Toggle del grafico nel dettaglio di un singolo strumento: prezzo (%) o
+ *  capitale investito vs valore. */
+function AssetChartToggle({
+  mode,
+  onChange,
+}: {
+  mode: "prezzo" | "investito";
+  onChange: (m: "prezzo" | "investito") => void;
+}) {
+  const opts: { key: "prezzo" | "investito"; label: string }[] = [
+    { key: "prezzo", label: "Prezzo" },
+    { key: "investito", label: "Investito" },
+  ];
+  return (
+    <div className="flex overflow-hidden rounded border border-zinc-700">
+      {opts.map((o) => (
+        <button
+          key={o.key}
+          onClick={() => onChange(o.key)}
+          className={`px-2 py-0.5 text-xs ${
+            mode === o.key
+              ? "bg-zinc-700 text-zinc-100"
+              : "bg-zinc-900 text-zinc-400 hover:bg-zinc-800"
+          }`}
+        >
+          {o.label}
+        </button>
+      ))}
+    </div>
+  );
+}
+
+/** Nota quando una modalità del grafico non ha abbastanza dati. */
+function EmptyChartNote({ children }: { children: ReactNode }) {
+  return (
+    <div className="flex h-44 items-center justify-center text-sm text-zinc-600">{children}</div>
+  );
 }
 
 /** chiave di raggruppamento mono-valore (tutte le modalità tranne assetclass,
@@ -269,8 +357,18 @@ function PatrimonioMisto({
   const [baseline, setBaseline] = useState<IsoDate | "prev">("prev");
   const [groupBy, setGroupBy] = useState<GroupBy>("globale");
   const [range, setRange] = useState<ChartRange>("max");
+  // modalità del grafico per gruppo e per singolo conto (default: valore/prezzo)
+  const [groupChartMode, setGroupChartMode] = useState<Map<string, ChartMode>>(new Map());
+  const [assetChartMode, setAssetChartMode] = useState<Map<string, "prezzo" | "investito">>(
+    new Map(),
+  );
   const [breakdownBy, setBreakdownBy] = useState<GroupBy>("assetclass");
   const [collapsed, setCollapsed] = useState<Set<string>>(new Set());
+  // transazioni per le serie di rendimento/investito (grafici asset)
+  const transactions = useMemo(
+    () => allDirectives(s).filter((d): d is TransactionDirective => d.kind === "transaction"),
+    [s],
+  );
   const [expanded, setExpanded] = useState<string>();
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [comparing, setComparing] = useState(false);
@@ -558,18 +656,27 @@ function PatrimonioMisto({
           const dPct = prevTot !== undefined ? pct(prevTot, g.total.toNumber()) : undefined;
           const extras = groupExtras.get(g.key);
           const gStats = extras?.stats;
-          // punti del grafico: taglio a destra su `when` e a sinistra su `range`
-          // (ancorato all'ultimo punto visibile).
-          const chartPoints = (() => {
-            const upto =
-              when === "live"
-                ? (extras?.series ?? [])
-                : (extras?.series ?? []).filter((p) => p.date <= when);
-            const cutoff = upto.length
-              ? chartCutoff(range, upto[upto.length - 1]!.date)
+          // punti del grafico Valore: taglio a destra su `when`, a sinistra su `range`
+          const chartPoints = windowByRange(extras?.series ?? [], when, range);
+          // modalità grafico + serie rendimento/investito (solo sugli asset del gruppo)
+          const chartMode = groupChartMode.get(g.key) ?? "valore";
+          const assetHoldings = g.rows
+            .filter((r) => r.account.commodity)
+            .map((r) => ({ commodity: r.account.commodity!, deposito: r.account.deposito }));
+          const hasAssets = assetHoldings.length > 0;
+          const returns =
+            !isCollapsed && hasAssets && chartMode !== "valore"
+              ? deriveReturns(assetHoldings, transactions, prices, asOf)
               : undefined;
-            return cutoff ? upto.filter((p) => p.date >= cutoff) : upto;
-          })();
+          const retPoints = returns
+            ? (() => {
+                const w = windowByRange(returns.index, when, range);
+                if (w.length < 2) return [];
+                const base = w[0]!.index;
+                return w.map((p) => ({ date: p.date, value: p.index / base - 1 }));
+              })()
+            : [];
+          const invPoints = returns ? windowByRange(returns.invested, when, range) : [];
           return (
             <section key={g.key} className="rounded border border-zinc-800">
               <button
@@ -629,9 +736,36 @@ function PatrimonioMisto({
 
               {!isCollapsed && (
                 <>
-                  {chartPoints.length >= 2 && (
+                  {(chartPoints.length >= 2 || hasAssets) && (
                     <div className="border-t border-zinc-800/60 px-6 py-3">
-                      <LineChart points={chartPoints} />
+                      {hasAssets && (
+                        <div className="mb-2 flex justify-end">
+                          <ChartModeToggle
+                            mode={chartMode}
+                            onChange={(m) =>
+                              setGroupChartMode((prev) => new Map(prev).set(g.key, m))
+                            }
+                          />
+                        </div>
+                      )}
+                      {chartMode === "valore" &&
+                        (chartPoints.length >= 2 ? (
+                          <LineChart points={chartPoints} />
+                        ) : (
+                          <EmptyChartNote>nessuno storico di valore</EmptyChartNote>
+                        ))}
+                      {chartMode === "rendimento" &&
+                        (retPoints.length >= 2 ? (
+                          <LineChart points={retPoints} format="pct" />
+                        ) : (
+                          <EmptyChartNote>storico insufficiente per il rendimento</EmptyChartNote>
+                        ))}
+                      {chartMode === "investito" &&
+                        (invPoints.length >= 2 ? (
+                          <InvestedValueChart points={invPoints} />
+                        ) : (
+                          <EmptyChartNote>storico insufficiente</EmptyChartNote>
+                        ))}
                     </div>
                   )}
                   <table className="w-full text-sm">
@@ -741,23 +875,80 @@ function PatrimonioMisto({
                                 <tr className="bg-zinc-950">
                                   <td colSpan={4} className="px-8 py-3">
                                     {(() => {
+                                      const acct = r.account;
+                                      // strumento: toggle Prezzo (%) / Investito vs Valore
+                                      if (acct.commodity) {
+                                        const mode = assetChartMode.get(acct.id) ?? "prezzo";
+                                        const priceSeries = (prices.get(acct.commodity) ?? []).map(
+                                          (pp) => ({ date: pp.date, value: pp.price.toNumber() }),
+                                        );
+                                        const pw = windowByRange(priceSeries, when, range);
+                                        const pricePts =
+                                          pw.length >= 2
+                                            ? pw.map((p) => ({
+                                                date: p.date,
+                                                value: p.value / pw[0]!.value - 1,
+                                              }))
+                                            : [];
+                                        const ret =
+                                          mode === "investito"
+                                            ? deriveReturns(
+                                                [
+                                                  {
+                                                    commodity: acct.commodity,
+                                                    deposito: acct.deposito,
+                                                  },
+                                                ],
+                                                transactions,
+                                                prices,
+                                                asOf,
+                                              )
+                                            : undefined;
+                                        const invPts = ret
+                                          ? windowByRange(ret.invested, when, range)
+                                          : [];
+                                        return (
+                                          <div className="mb-3 border-b border-zinc-800/60 pb-3">
+                                            <div className="mb-2 flex justify-end">
+                                              <AssetChartToggle
+                                                mode={mode}
+                                                onChange={(m) =>
+                                                  setAssetChartMode((prev) =>
+                                                    new Map(prev).set(acct.id, m),
+                                                  )
+                                                }
+                                              />
+                                            </div>
+                                            {mode === "prezzo" &&
+                                              (pricePts.length >= 2 ? (
+                                                <LineChart points={pricePts} format="pct" />
+                                              ) : (
+                                                <EmptyChartNote>
+                                                  storico prezzi insufficiente
+                                                </EmptyChartNote>
+                                              ))}
+                                            {mode === "investito" &&
+                                              (invPts.length >= 2 ? (
+                                                <InvestedValueChart points={invPts} />
+                                              ) : (
+                                                <EmptyChartNote>
+                                                  storico insufficiente
+                                                </EmptyChartNote>
+                                              ))}
+                                          </div>
+                                        );
+                                      }
+                                      // conto manuale: serie di valore (come prima)
                                       const full = deriveValueSeries({
                                         // forza inNetWorth: la serie del singolo conto va
                                         // mostrata anche per i conti esclusi dal net worth
-                                        accounts: [{ ...r.account, inNetWorth: true }],
+                                        accounts: [{ ...acct, inNetWorth: true }],
                                         snapshots: s.snapshots,
                                         directives: allDirectives(s),
                                         prices,
                                         asOf,
                                       }).global;
-                                      const upto =
-                                        when === "live" ? full : full.filter((p) => p.date <= when);
-                                      const cutoff = upto.length
-                                        ? chartCutoff(range, upto[upto.length - 1]!.date)
-                                        : undefined;
-                                      const points = cutoff
-                                        ? upto.filter((p) => p.date >= cutoff)
-                                        : upto;
+                                      const points = windowByRange(full, when, range);
                                       return points.length >= 2 ? (
                                         <div className="mb-3 border-b border-zinc-800/60 pb-3">
                                           <LineChart points={points} />
