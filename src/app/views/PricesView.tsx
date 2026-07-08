@@ -96,7 +96,12 @@ export function PricesView() {
   const { commodities, prices, booked } = useDerived();
   const s = useApp();
 
-  const open = [...booked.positions.entries()].filter(([, p]) => !p.units.isZero());
+  // le posizioni sono chiaviate per deposito (holdingKey "broker|commodity");
+  // qui aggrego per commodity (ISIN puro), che è la chiave di prezzi, info e
+  // nome — come fanno patrimonio/assets con pos.commodity.
+  const open = [...booked.positions.values()]
+    .filter((p) => !p.units.isZero())
+    .filter((p, i, arr) => arr.findIndex((q) => q.commodity === p.commodity) === i);
 
   // commodity → nome del conto (etichetta visualizzata, come nelle altre viste)
   const nomeByCommodity = new Map(
@@ -128,7 +133,8 @@ export function PricesView() {
             </tr>
           </thead>
           <tbody>
-            {open.map(([commodity]) => {
+            {open.map((p) => {
+              const commodity = p.commodity;
               const info = commodities.get(commodity);
               const series = prices.get(commodity) ?? [];
               const last = series[series.length - 1];
