@@ -24,6 +24,33 @@ import { ManualSnapshotEditor, SnapshotForm } from "./SnapshotForm";
 
 type GroupBy = "globale" | "assetclass" | "tracciamento" | "owner" | "portfolio";
 
+/** Finestra temporale del grafico (quanto indietro mostrare). */
+type ChartRange = "1m" | "3m" | "6m" | "1a" | "ytd" | "max";
+const CHART_RANGES: { key: ChartRange; label: string }[] = [
+  { key: "1m", label: "1M" },
+  { key: "3m", label: "3M" },
+  { key: "6m", label: "6M" },
+  { key: "1a", label: "1A" },
+  { key: "ytd", label: "YTD" },
+  { key: "max", label: "Max" },
+];
+const RANGE_MONTHS: Partial<Record<ChartRange, number>> = { "1m": 1, "3m": 3, "6m": 6, "1a": 12 };
+
+/** Data-soglia (inclusa) per una finestra, ancorata all'ultimo punto `anchor`
+ *  (IsoDate "YYYY-MM-DD"). "max" → undefined (nessun taglio). Il confronto è
+ *  lessicografico sulle stringhe ISO, quindi una soglia con giorno inesistente
+ *  (es. "-11-31") resta comunque un limite valido. */
+function chartCutoff(range: ChartRange, anchor: IsoDate): IsoDate | undefined {
+  if (range === "max") return undefined;
+  const [y, m, d] = anchor.split("-").map(Number) as [number, number, number];
+  if (range === "ytd") return `${y}-01-01`;
+  const months = RANGE_MONTHS[range]!;
+  const total = y * 12 + (m - 1) - months;
+  const ny = Math.floor(total / 12);
+  const nm = (total % 12) + 1;
+  return `${ny}-${String(nm).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
+}
+
 /** chiave di raggruppamento mono-valore (tutte le modalità tranne assetclass,
  *  dove un conto composito ricade su più classi: vedi classContributions). */
 function groupKeyOf(a: PatrimonioAccount, groupBy: GroupBy): string {
@@ -241,6 +268,7 @@ function PatrimonioMisto({
   const [when, setWhen] = useState<IsoDate | "live">("live");
   const [baseline, setBaseline] = useState<IsoDate | "prev">("prev");
   const [groupBy, setGroupBy] = useState<GroupBy>("globale");
+  const [range, setRange] = useState<ChartRange>("max");
   const [breakdownBy, setBreakdownBy] = useState<GroupBy>("assetclass");
   const [collapsed, setCollapsed] = useState<Set<string>>(new Set());
   const [expanded, setExpanded] = useState<string>();
@@ -428,6 +456,24 @@ function PatrimonioMisto({
               <option value="portfolio">per portfolio</option>
             </select>
           </label>
+          <div className="flex items-center gap-1.5 text-sm">
+            <span className="text-zinc-400">grafico</span>
+            <div className="flex overflow-hidden rounded border border-zinc-700">
+              {CHART_RANGES.map((r) => (
+                <button
+                  key={r.key}
+                  onClick={() => setRange(r.key)}
+                  className={`px-2 py-1 text-xs tabular-nums ${
+                    range === r.key
+                      ? "bg-zinc-700 text-zinc-100"
+                      : "bg-zinc-900 text-zinc-400 hover:bg-zinc-800"
+                  }`}
+                >
+                  {r.label}
+                </button>
+              ))}
+            </div>
+          </div>
           {selected.size > 0 && (
             <div className="flex items-center gap-1">
               <button
@@ -512,6 +558,18 @@ function PatrimonioMisto({
           const dPct = prevTot !== undefined ? pct(prevTot, g.total.toNumber()) : undefined;
           const extras = groupExtras.get(g.key);
           const gStats = extras?.stats;
+          // punti del grafico: taglio a destra su `when` e a sinistra su `range`
+          // (ancorato all'ultimo punto visibile).
+          const chartPoints = (() => {
+            const upto =
+              when === "live"
+                ? (extras?.series ?? [])
+                : (extras?.series ?? []).filter((p) => p.date <= when);
+            const cutoff = upto.length
+              ? chartCutoff(range, upto[upto.length - 1]!.date)
+              : undefined;
+            return cutoff ? upto.filter((p) => p.date >= cutoff) : upto;
+          })();
           return (
             <section key={g.key} className="rounded border border-zinc-800">
               <button
@@ -571,15 +629,9 @@ function PatrimonioMisto({
 
               {!isCollapsed && (
                 <>
-                  {extras && extras.series.length >= 2 && (
+                  {chartPoints.length >= 2 && (
                     <div className="border-t border-zinc-800/60 px-6 py-3">
-                      <LineChart
-                        points={
-                          when === "live"
-                            ? extras.series
-                            : extras.series.filter((p) => p.date <= when)
-                        }
-                      />
+                      <LineChart points={chartPoints} />
                     </div>
                   )}
                   <table className="w-full text-sm">
@@ -698,8 +750,14 @@ function PatrimonioMisto({
                                         prices,
                                         asOf,
                                       }).global;
-                                      const points =
+                                      const upto =
                                         when === "live" ? full : full.filter((p) => p.date <= when);
+                                      const cutoff = upto.length
+                                        ? chartCutoff(range, upto[upto.length - 1]!.date)
+                                        : undefined;
+                                      const points = cutoff
+                                        ? upto.filter((p) => p.date >= cutoff)
+                                        : upto;
                                       return points.length >= 2 ? (
                                         <div className="mb-3 border-b border-zinc-800/60 pb-3">
                                           <LineChart points={points} />
