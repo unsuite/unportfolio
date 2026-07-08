@@ -1,5 +1,5 @@
 import { Decimal } from "decimal.js";
-import { ChevronsDownUp, ChevronsUpDown, Plus } from "lucide-react";
+import { ChevronsDownUp, ChevronsUpDown, Pencil, Plus } from "lucide-react";
 import { Fragment, useMemo, useState } from "react";
 import type { IsoDate } from "../../core/beancount/ast";
 import { book, holdingKey } from "../../core/beancount/booking";
@@ -249,7 +249,9 @@ function PatrimonioMisto({
   const [editing, setEditing] = useState<
     { kind: "edit"; conto: PatrimonioAccount } | { kind: "new" }
   >();
-  const [snapEditing, setSnapEditing] = useState(false);
+  // null = chiuso; "new" = nuovo snapshot; IsoDate = modifica in blocco di
+  // uno snapshot già inserito (la data selezionata nel selettore "al").
+  const [snapEdit, setSnapEdit] = useState<IsoDate | "new" | null>(null);
 
   // AssetRow per commodity, ricalcolati alla posizione selezionata (`when`):
   // in live = quelli già derivati; a una data passata ri-book le sole
@@ -474,11 +476,20 @@ function PatrimonioMisto({
               <Plus size={14} /> Nuovo conto
             </button>
             <button
-              onClick={() => setSnapEditing(true)}
+              onClick={() => setSnapEdit("new")}
               className="flex items-center gap-1.5 rounded bg-emerald-700 px-3 py-1.5 text-xs font-medium text-white hover:bg-emerald-600"
             >
               <Plus size={14} /> Nuovo snapshot
             </button>
+            {when !== "live" && (
+              <button
+                onClick={() => setSnapEdit(when)}
+                title={`Modifica in blocco lo snapshot del ${when}`}
+                className="flex items-center gap-1.5 rounded bg-zinc-800 px-3 py-1.5 text-xs font-medium text-zinc-200 hover:bg-zinc-700"
+              >
+                <Pencil size={14} /> Modifica snapshot
+              </button>
+            )}
           </div>
           <button
             onClick={() =>
@@ -1030,12 +1041,13 @@ function PatrimonioMisto({
         </Modal>
       )}
 
-      {snapEditing && (
-        <Modal onClose={() => setSnapEditing(false)}>
+      {snapEdit && (
+        <Modal onClose={() => setSnapEdit(null)}>
           <SnapshotForm
             accounts={s.accounts.filter((a) => !a.commodity)}
             snapshots={s.snapshots}
-            onClose={() => setSnapEditing(false)}
+            onClose={() => setSnapEdit(null)}
+            initialDate={snapEdit === "new" ? undefined : snapEdit}
           />
         </Modal>
       )}

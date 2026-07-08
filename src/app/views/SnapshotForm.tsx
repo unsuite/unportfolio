@@ -14,13 +14,18 @@ export function SnapshotForm({
   accounts,
   snapshots,
   onClose,
+  initialDate,
 }: {
   /** conti manuali (senza commodity): gli unici alimentati da snapshot */
   accounts: PatrimonioAccount[];
   snapshots: SnapshotEntry[];
   onClose: () => void;
+  /** se valorizzata, si apre in modifica di uno snapshot già inserito */
+  initialDate?: IsoDate;
 }) {
-  const [date, setDate] = useState<IsoDate>(todayIso());
+  const editing = initialDate !== undefined;
+  const title = editing ? "Modifica snapshot" : "Nuovo snapshot";
+  const [date, setDate] = useState<IsoDate>(initialDate ?? todayIso());
   // valore digitato per conto; "" = lascia invariato (non scrive nulla)
   const [values, setValues] = useState<Record<string, string>>({});
 
@@ -62,7 +67,7 @@ export function SnapshotForm({
   if (accounts.length === 0)
     return (
       <div className="w-full rounded border border-zinc-700 bg-zinc-900 p-4 text-sm">
-        <div className="mb-3 font-medium">Nuovo snapshot</div>
+        <div className="mb-3 font-medium">{title}</div>
         <p className="text-zinc-400">
           Nessun conto manuale: gli snapshot servono ai conti senza strumento collegato (asset
           campionati). Crea prima un conto manuale.
@@ -78,7 +83,7 @@ export function SnapshotForm({
   return (
     <div className="w-full rounded border border-zinc-700 bg-zinc-900 p-4 text-sm">
       <div className="mb-3 flex items-center justify-between gap-4">
-        <span className="font-medium">Nuovo snapshot</span>
+        <span className="font-medium">{title}</span>
         <label className="flex items-center gap-2">
           <span className="text-xs text-zinc-500">Data</span>
           <input
@@ -127,7 +132,7 @@ export function SnapshotForm({
           onClick={() => void save()}
           className="rounded bg-emerald-700 px-3 py-1.5 hover:bg-emerald-600"
         >
-          Salva snapshot
+          {editing ? "Salva modifiche" : "Salva snapshot"}
         </button>
         <button onClick={onClose} className="rounded bg-zinc-700 px-3 py-1.5 hover:bg-zinc-600">
           Annulla
