@@ -1,26 +1,48 @@
 #!/bin/sh
-# unportfolio — init della cartella dati.
+# unportfolio — setup cartella dati e aggiornamento prezzi.
 #
 # Uso:
-#   curl -fsSL <sito>/init.sh | sh -s -- [cartella] [url-sito]
+#   curl -fsSL <sito>/init.sh | sh -s -- [cartella] [url-sito]            # onboarding
+#   curl -fsSL <sito>/init.sh | sh -s -- <cartella> <url-sito> --prezzi   # aggiorna i prezzi
 #
-# Crea la cartella dati con i file skeleton (ledger beancount + TOML/CSV),
-# annota il percorso assoluto in config.toml (il browser non può rilevarlo)
-# e apre il sito: lì basta un click su "Scegli la cartella dati" e
-# selezionare la cartella appena creata (richiesto dal browser, non
-# automatizzabile per sicurezza).
+# Onboarding: crea la cartella dati skeleton (ledger beancount + TOML/CSV),
+# annota il percorso assoluto in config.toml (il browser non può rilevarlo),
+# installa il binario prezzi self-contained se passi <url-sito> e apre il sito.
+# Con --prezzi: installa-se-manca il binario (bun --compile, nessun runtime) e
+# aggiorna i prezzi della cartella, saltando skeleton e apertura sito. Gli
+# argomenti dopo --prezzi (--re-resolve, --set ...) passano al CLI prezzi.
 set -eu
 
+# sito canonico da cui scaricare il binario (come claude.ai per Claude): così il
+# comando prezzi non deve ripetere l'origin. Sovrascrivibile con un arg http(s)
+# esplicito o con la variabile d'ambiente SITE.
+SITE_DEFAULT="https://unsuite.github.io/unportfolio"
+
 DIR="${1:-$HOME/Documents/unportfolio-data}"
-SITE="${2:-${SITE:-}}"
+[ "$#" -gt 0 ] && shift || true
+
+# sito esplicito: primo argomento http(s) rimasto (override del default)
+SITE="${SITE:-}"
+case "${1:-}" in
+  http://* | https://*) SITE="$1"; shift ;;
+esac
+
+# modalità prezzi + raccolta degli argomenti extra da girare al CLI
+PREZZI=0
+for arg in "$@"; do
+  [ "$arg" = "--prezzi" ] && PREZZI=1
+done
+set -- $(for arg in "$@"; do [ "$arg" = "--prezzi" ] || printf '%s ' "$arg"; done)
 
 # --- CLI prezzi: binario self-contained (nessun runtime richiesto) ---
 install_prices_bin() {
   [ -n "$SITE" ] || return 0
+  # già installato: non riscaricare (il refresh prezzi gira spesso)
+  [ -x "$HOME/.local/bin/unportfolio-prices" ] && return 0
   case "$(uname -s)" in
     Darwin) OS=darwin ;;
     Linux) OS=linux ;;
-    *) echo "⚠ piattaforma $(uname -s) senza binario precompilato: usa 'curl <sito>/prices.mjs | node --input-type=module -' (serve Node ≥ 18)"; return 0 ;;
+    *) echo "⚠ piattaforma $(uname -s) senza binario precompilato: compila da repo con 'npm run build:bins'"; return 0 ;;
   esac
   case "$(uname -m)" in
     arm64|aarch64) ARCH=arm64 ;;
@@ -40,9 +62,25 @@ install_prices_bin() {
         ;;
     esac
   else
-    echo "⚠ download del binario fallito: in alternativa 'curl $SITE/prices.mjs | node --input-type=module -' (serve Node ≥ 18)"
+    echo "⚠ download del binario fallito da $SITE/bin/prices-$OS-$ARCH — riprova più tardi"
   fi
 }
+
+# --- modalità prezzi: installa-se-manca + aggiorna, niente skeleton/sito ---
+if [ "$PREZZI" = 1 ]; then
+  # senza sito esplicito si usa quello canonico: il binario viene da lì
+  SITE="${SITE:-$SITE_DEFAULT}"
+  install_prices_bin
+  BIN="$HOME/.local/bin/unportfolio-prices"
+  [ -x "$BIN" ] || {
+    echo "⚠ binario prezzi non disponibile: passa l'url del sito per scaricarlo, es:" >&2
+    echo "  curl -fsSL <sito>/init.sh | sh -s -- \"$DIR\" <sito> --prezzi" >&2
+    exit 1
+  }
+  echo "aggiorno i prezzi: $DIR"
+  exec "$BIN" "$DIR" "$@"
+fi
+
 install_prices_bin
 
 # --- cartella + skeleton (non sovrascrive mai file esistenti) ---

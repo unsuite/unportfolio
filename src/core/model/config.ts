@@ -128,7 +128,7 @@ export interface AppConfig {
   /** intervallo di campionamento dello storico: 1d | 1wk | 1mo */
   storicoIntervallo: string;
   /**
-   * percorso assoluto della cartella dati, scritto dal CLI prices.mjs
+   * percorso assoluto della cartella dati, scritto dal CLI prezzi
    * (il browser non può rilevarlo: la File System Access API non espone
    * i percorsi, solo handle opachi)
    */

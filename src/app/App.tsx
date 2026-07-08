@@ -267,8 +267,8 @@ function Onboarding({ restore }: { restore: RestoreResult | undefined }) {
           </div>
           <code className="block overflow-x-auto rounded border border-zinc-800 bg-zinc-950 px-2 py-1.5 text-xs whitespace-nowrap text-zinc-400 select-all">
             {win
-              ? `irm ${window.location.origin}/init.ps1 | iex`
-              : `curl -fsSL ${window.location.origin}/init.sh | sh -s -- ~/Documents/unportfolio-data`}
+              ? `irm ${window.location.origin}${import.meta.env.BASE_URL}init.ps1 | iex`
+              : `curl -fsSL ${window.location.origin}${import.meta.env.BASE_URL}init.sh | sh -s -- ~/Documents/unportfolio-data`}
           </code>
         </div>
         {error && <p className="text-sm text-red-400">{error}</p>}

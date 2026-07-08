@@ -28,11 +28,14 @@
       backfill (+515 directives, bean-check ok).
 - [x] X.WBIT risolto: `WBTC.PA` (Parigi, EUR, con storico).
 - [x] Comando CLI copiabile nella tab Prezzi.
-- [x] **CLI distribuibile**: `npm run build:cli` impacchetta lo script in
-      `prices.mjs` autonomo (solo Node ≥ 18), eseguibile direttamente dal sito
-      con `curl -fsSL <sito>/prices.mjs | node --input-type=module - <dir>` —
-      nessun repo richiesto. Al primo run annota `percorso_dati` in
-      config.toml così la UI mostra il comando esatto.
+- [x] **CLI distribuibile**: binario self-contained (`npm run build:bins`,
+      bun `--compile`, nessun runtime) servito dal sito. `init.sh --prezzi` lo
+      scarica in `~/.local/bin` se manca e poi aggiorna — non presuppone né il
+      binario né Node installati:
+      `curl -fsSL <sito>/init.sh | sh -s -- <dir> --prezzi` (sito canonico
+      hardcoded nello script, override via arg/env). Al primo run
+      annota `percorso_dati` in config.toml così la UI mostra il comando esatto.
+      (Il vecchio fallback `prices.mjs`/Node è stato rimosso.)
 - [x] **init.sh servito dal sito**: `curl -fsSL <sito>/init.sh | sh -s -- [dir] [sito]`
       crea la cartella dati skeleton col percorso già annotato, installa il
       binario prezzi e apre il sito; resta solo il click sul picker

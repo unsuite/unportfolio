@@ -72,10 +72,11 @@ function CommandForDataDir() {
   const path =
     s.config.percorsoDati ??
     `~/Documents/${s.store?.kind === "fsa" ? s.store.label : "<cartella-dati>"}`;
-  const origin = window.location.origin;
+  // origin + base path della project page (es. .../unportfolio), senza slash finale
+  const site = (window.location.origin + import.meta.env.BASE_URL).replace(/\/+$/, "");
   return (
     <>
-      <CopyableCommand cmd={`~/.local/bin/unportfolio-prices "${path}"`} />
+      <CopyableCommand cmd={`curl -fsSL ${site}/init.sh | sh -s -- "${path}" --prezzi`} />
       {!s.config.percorsoDati && (
         <p className="mb-2 text-xs text-amber-400">
           Percorso stimato: il browser non può rilevarlo. Al primo run il comando lo annota in
@@ -83,15 +84,9 @@ function CommandForDataDir() {
         </p>
       )}
       <p className="mb-2 text-xs text-zinc-600">
-        Il binario è autonomo (nessun runtime richiesto) e viene installato da init.sh. Se non
-        l'hai:{" "}
-        <code className="select-all">
-          curl -fsSL {origin}/init.sh | sh -s -- "{path}"
-        </code>
-        . In alternativa, con Node ≥ 18:{" "}
-        <code className="select-all">
-          curl -fsSL {origin}/prices.mjs | node --input-type=module - "{path}"
-        </code>
+        Self-contained: al primo run scarica il binario prezzi (bun compilato, nessun runtime
+        richiesto) in <code>~/.local/bin</code>, poi aggiorna. Una volta installato puoi lanciarlo
+        diretto: <code className="select-all">~/.local/bin/unportfolio-prices "{path}"</code>
       </p>
     </>
   );

@@ -5,8 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "npm run build:cli && tsc -b && vite build",
-    "build:cli": "esbuild scripts/prices.ts --bundle --platform=node --format=esm --target=node18 --outfile=public/prices.mjs",
+    "build": "tsc -b && vite build",
     "build:bins": "for t in darwin-arm64 darwin-x64 linux-x64 linux-arm64 windows-x64; do bun build scripts/prices.ts --compile --target=bun-$t --outfile=public/bin/prices-$t || exit 1; done",
     "preview": "vite preview",
     "test": "vitest run",

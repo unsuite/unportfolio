@@ -38,7 +38,7 @@ function Install-PricesBin {
       Write-Host "    setx PATH `"`$env:Path;$binDir`""
     }
   } catch {
-    Write-Host "⚠ download del binario fallito: in alternativa 'irm $Site/prices.mjs | node --input-type=module -' (serve Node >= 18)"
+    Write-Host "⚠ download del binario fallito da $Site/bin/prices-windows-x64.exe — riprova più tardi"
   }
 }
 Install-PricesBin

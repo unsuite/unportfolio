@@ -64,13 +64,13 @@ npx vite-node scripts/prices.ts -- ... --re-resolve                  # rifai la 
 npx vite-node scripts/prices.ts -- ... --set X.WBIT=yahoo:WBTC.PA    # binding manuale
 ```
 
-Per chi usa l'app deployata senza il repo: `init.sh` (servito dal sito)
-installa `~/.local/bin/unportfolio-prices`, un **binario self-contained**
-(bun `--compile`, nessun runtime richiesto, ~60-90 MB per piattaforma:
-darwin/linux × arm64/x64). Fallback con Node ≥ 18:
+Per chi usa l'app deployata senza il repo, un solo comando (nessun runtime
+richiesto, non presuppone il binario installato): `init.sh --prezzi` scarica il
+**binario self-contained** (bun `--compile`, ~60-90 MB per piattaforma:
+darwin/linux × arm64/x64) in `~/.local/bin` la prima volta e poi lo riusa.
 
 ```sh
-curl -fsSL https://<sito>/prices.mjs | node --input-type=module - /percorso/cartella-dati
+curl -fsSL https://<sito>/init.sh | sh -s -- /percorso/cartella-dati --prezzi
 ```
 
 I binari si generano con `npm run build:bins` (da lanciare prima del deploy;

@@ -10,5 +10,7 @@ tsconfig.tsbuildinfo
 # eccezione: fixture di test con dati fittizi
 !tests/fixtures/*.csv
 
-public/prices.mjs
 public/bin/
+
+# override locale del SITE_URL (default hardcoded in vite.config.ts)
+.env
