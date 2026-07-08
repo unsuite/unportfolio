@@ -91,15 +91,18 @@ export function derivePatrimonio(input: DerivePatrimonioInput): PatrimonioStatem
         priceAt(input.prices, account.commodity, input.asOf)?.price;
       if (liveQuote !== undefined) live = unitsNow.mul(liveQuote);
     } else {
-      for (const date of dates) values.set(date, manual.get(`${date}|${account.id}`));
-      // live for manual accounts = most recent snapshot
-      for (let i = dates.length - 1; i >= 0; i--) {
-        const v = values.get(dates[i]!);
-        if (v !== undefined) {
-          live = v;
-          break;
-        }
+      // carry-forward (come timeline.ts): il saldo di un conto manuale è una
+      // funzione a gradino, persiste fino allo snapshot successivo. Alla data D
+      // vale l'ultimo snapshot ≤ D, non solo quello esattamente a D — altrimenti
+      // un conto non ri-registrato nell'ultimo snapshot si azzererebbe e il Δ vs
+      // una data precedente mostrerebbe l'intero valore come variazione.
+      let carried: Decimal | undefined;
+      for (const date of dates) {
+        const exact = manual.get(`${date}|${account.id}`);
+        if (exact !== undefined) carried = exact;
+        values.set(date, carried);
       }
+      live = carried; // ultimo snapshot noto
     }
     const row: PatrimonioRow = { account, values };
     if (live !== undefined) row.live = live;

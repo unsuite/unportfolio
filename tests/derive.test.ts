@@ -194,6 +194,58 @@ describe("patrimonio", () => {
   });
 });
 
+describe("patrimonio: carry-forward dei conti manuali", () => {
+  // cash-b viene registrato solo al primo snapshot; al secondo NON viene
+  // ri-messo (workflow reale: si aggiorna solo ciò che è cambiato). Il suo
+  // saldo deve persistere (funzione a gradino), non azzerarsi — altrimenti il
+  // Δ vs uno snapshot precedente mostrerebbe l'intero valore come variazione.
+  const accounts = parseAccounts(`
+[[account]]
+id = "cash-a"
+nome = "Cash A"
+sezione = "cash"
+tipo = "Liquidity"
+owner = "X"
+portfolio = "P"
+in_net_worth = true
+valuta = "EUR"
+
+[[account]]
+id = "cash-b"
+nome = "Cash B"
+sezione = "cash"
+tipo = "Liquidity"
+owner = "Y"
+portfolio = "P"
+in_net_worth = true
+valuta = "EUR"
+`);
+  const snapshots = parseSnapshots(`date,account_id,value,currency
+2025-03-31,cash-a,1000,EUR
+2025-03-31,cash-b,500,EUR
+2025-06-30,cash-a,1100,EUR
+`);
+  const statement = derivePatrimonio({
+    accounts,
+    snapshots,
+    directives: [],
+    prices: new Map(),
+    asOf: "2025-07-01",
+  });
+
+  it("riporta il valore di cash-b al 2025-06-30 (non azzerato)", () => {
+    const b = statement.rows.find((r) => r.account.id === "cash-b")!;
+    expect(b.values.get("2025-03-31")!.toNumber()).toBe(500);
+    expect(b.values.get("2025-06-30")!.toNumber()).toBe(500);
+    expect(b.live!.toNumber()).toBe(500);
+  });
+
+  it("il totale al 2025-06-30 include cash-b riportato", () => {
+    // 1100 (cash-a) + 500 (cash-b carry-forward)
+    expect(statement.totals.get("2025-06-30")!.toNumber()).toBe(1600);
+  });
+});
+
 describe("goal status waterfall (valori del foglio, colonna Q4 2024)", () => {
   // Replica della catena del tab "5. Goal Status":
   // Liq-Gab → Liq-Ale → Liq-Plinio → Emergency → SPP-Gab
