@@ -1,34 +1,47 @@
 #Requires -Version 5
-# unportfolio — init della cartella dati (Windows / PowerShell).
+# unportfolio — setup cartella dati e aggiornamento prezzi (Windows / PowerShell).
 #
-# Uso:
+# Uso (onboarding):
 #   irm <sito>/init.ps1 | iex
-# oppure con parametri (cartella e/o sito):
 #   & ([scriptblock]::Create((irm <sito>/init.ps1))) -Dir <cartella> -Site <url-sito>
+# Uso (aggiorna i prezzi):
+#   & ([scriptblock]::Create((irm <sito>/init.ps1))) -Dir <cartella> -Prezzi
 #
-# Crea la cartella dati con i file skeleton (ledger beancount + TOML/CSV),
-# annota il percorso assoluto in config.toml (il browser non può rilevarlo)
-# e — se passi -Site — scarica la CLI prezzi e apre il sito: lì basta un click
-# su "Scegli la cartella dati" e selezionare la cartella appena creata
-# (richiesto dal browser, non automatizzabile per sicurezza).
+# Onboarding: crea la cartella dati skeleton (ledger beancount + TOML/CSV),
+# annota il percorso assoluto in config.toml (il browser non può rilevarlo),
+# installa il binario prezzi se passi -Site e apre il sito: lì basta un click
+# su "Scegli la cartella dati" e selezionare la cartella appena creata.
+# Con -Prezzi: installa-se-manca il binario (nessun runtime) e aggiorna i prezzi
+# della cartella, saltando skeleton e apertura sito. Gli argomenti extra
+# (-Prezzi ... --re-resolve, --set ...) passano al CLI prezzi.
 param(
   [string]$Dir  = "$HOME\Documents\unportfolio-data",
-  [string]$Site = $env:SITE
+  [string]$Site = $env:SITE,
+  [switch]$Prezzi,
+  [Parameter(ValueFromRemainingArguments = $true)]
+  [string[]]$Rest
 )
 
 Set-StrictMode -Version Latest
 $ErrorActionPreference = "Stop"
 
+# sito canonico da cui scaricare il binario (come init.sh SITE_DEFAULT): iniettato
+# da SITE_URL nel build (vedi vite.config.ts), fallback qui sotto. Sovrascrivibile
+# con -Site o la variabile d'ambiente SITE.
+$SiteDefault = "https://unsuite.github.io/unportfolio"
+
 # --- CLI prezzi: binario self-contained (nessun runtime richiesto) ---
 function Install-PricesBin {
   if (-not $Site) { return }
+  $binDir = Join-Path $env:LOCALAPPDATA "unportfolio\bin"
+  $target = Join-Path $binDir "unportfolio-prices.exe"
+  # già installato: non riscaricare (il refresh prezzi gira spesso)
+  if (Test-Path -LiteralPath $target) { return }
   if (-not [Environment]::Is64BitOperatingSystem) {
     Write-Host "⚠ architettura non x64: nessun binario precompilato per Windows"
     return
   }
-  $binDir = Join-Path $env:LOCALAPPDATA "unportfolio\bin"
   New-Item -ItemType Directory -Force -Path $binDir | Out-Null
-  $target = Join-Path $binDir "unportfolio-prices.exe"
   try {
     Invoke-WebRequest -UseBasicParsing -Uri "$Site/bin/prices-windows-x64.exe" -OutFile $target
     Write-Host "✓ installato $target (binario autonomo, nessun runtime richiesto)"
@@ -41,6 +54,23 @@ function Install-PricesBin {
     Write-Host "⚠ download del binario fallito da $Site/bin/prices-windows-x64.exe — riprova più tardi"
   }
 }
+
+# --- modalità prezzi: installa-se-manca + aggiorna, niente skeleton/sito ---
+if ($Prezzi) {
+  # senza sito esplicito si usa quello canonico: il binario viene da lì
+  if (-not $Site) { $Site = $SiteDefault }
+  Install-PricesBin
+  $bin = Join-Path $env:LOCALAPPDATA "unportfolio\bin\unportfolio-prices.exe"
+  if (-not (Test-Path -LiteralPath $bin)) {
+    Write-Host "⚠ binario prezzi non disponibile: passa -Site per scaricarlo, es:"
+    Write-Host "  ... -Dir `"$Dir`" -Site <sito> -Prezzi"
+    exit 1
+  }
+  Write-Host "aggiorno i prezzi: $Dir"
+  & $bin $Dir @Rest
+  exit $LASTEXITCODE
+}
+
 Install-PricesBin
 
 # --- cartella + skeleton (non sovrascrive mai file esistenti) ---
@@ -83,6 +113,80 @@ Put "goals.toml" @'
 '@
 Put "snapshots.csv" @'
 date,account_id,value,currency
+'@
+
+# AGENTS.md: onboarding per un LLM che apre la cartella (duplicato in
+# src/app/fs/fileSystem.ts AGENTS_MD e public/init.sh).
+Put "AGENTS.md" @'
+# unportfolio — cartella dati
+
+Questa cartella è il database di **unportfolio**, un'app locale per net worth,
+portafoglio e obiettivi. Nessun backend: sono file in chiaro, versionabili in
+git. Se stai analizzando questa cartella, parti da qui.
+
+## Il ledger è beancount v2 valido
+
+`ledger/` si usa senza conversioni:
+
+```sh
+bean-check ledger/main.beancount                        # valida
+bean-query ledger/main.beancount "SELECT account, sum(position)"   # interroga
+fava ledger/main.beancount                              # UI web
+```
+
+- `ledger/main.beancount` — opzioni + `include`: è il punto d'ingresso.
+- `ledger/accounts.beancount` — `open` + `commodity` (**rigenerato dall'app**, non editarlo a mano).
+- `ledger/movimenti.beancount` — transazioni (append per batch di import).
+- `ledger/prices.beancount` — direttive `price` campionate (storico prezzi).
+
+## Convenzioni (rilevanti per l'analisi)
+
+- **La commodity di ogni strumento è l'ISIN**, non il ticker; il ticker è solo
+  metadato di display (`ticker` sulla direttiva `commodity`).
+- **Bond in lotti da 100 di nominale**: 5.000 € nominali = 50 unità, così il
+  prezzo (% del nominale) è letteralmente il prezzo unitario.
+- Vendite con booking **FIFO**.
+- Metadati strumento (classe, tassa, scadenza, cedola, sorgente prezzo) sulle
+  direttive `commodity`.
+- Dedupe import via metadato `import-id`: re-importare lo stesso file non duplica.
+
+## File di configurazione (TOML/CSV)
+
+- `patrimonio.toml` — righe del Patrimonio (sezione, owner, portfolio, split).
+  L'**etichetta** mostrata di uno strumento è il campo `nome` qui.
+- `goals.toml` — obiettivi. `targets.toml` — pesi target del ribilanciamento.
+- `snapshots.csv` — saldi manuali periodici. Header: `date,account_id,value,currency`.
+- `config.toml` — `percorso_dati` (path assoluto, annotato dal CLI) e `[prezzi]`
+  (`anni`, `intervallo`) che definisce la copertura dello storico.
+
+## Aggiornare i prezzi (CLI)
+
+I prezzi si aggiornano **solo da terminale** (niente CORS/proxy): ETF via Yahoo
+(simboli risolti dall'ISIN), bond MOT via Borsa Italiana. Campiona una `price`
+per giorno/strumento in `ledger/prices.beancount`.
+
+Col binario installato (`~/.local/bin/unportfolio-prices`):
+
+```sh
+unportfolio-prices "<questa-cartella>"                              # incrementale
+unportfolio-prices "<questa-cartella>" --re-resolve                 # rifà la gara dei simboli
+unportfolio-prices "<questa-cartella>" --set X.WBIT=yahoo:WBTC.PA   # binding manuale
+```
+
+Se il binario non c'è, un solo comando lo installa (self-contained, nessun
+runtime) e aggiorna:
+
+```sh
+curl -fsSL https://unsuite.github.io/unportfolio/init.sh | sh -s -- "<questa-cartella>" --prezzi
+```
+
+Dal repo sorgente: `npx vite-node scripts/prices.ts -- <cartella>`.
+
+## Se modifichi questa cartella
+
+- Le transazioni si aggiungono in `ledger/movimenti.beancount` (append).
+- Dopo modifiche al ledger valida con `bean-check ledger/main.beancount`.
+- I prezzi si aggiornano col CLI, non a mano.
 '@
 
 $absDir = (Resolve-Path -LiteralPath $Dir).Path
