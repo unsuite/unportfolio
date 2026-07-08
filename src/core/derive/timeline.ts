@@ -26,13 +26,16 @@ function isoAddDays(date: IsoDate, days: number): IsoDate {
 }
 
 /** griglia settimanale dalla prima data utile a oggi (max ~260 punti) */
-export function weeklyGrid(from: IsoDate, to: IsoDate): IsoDate[] {
+/** Griglia di date da `from` a `to` con passo `stepDays` (default giornaliero).
+ *  Il guard limita a ~20 anni giornalieri: oltre, si troncano i punti più vecchi
+ *  (il grafico resta comunque ancorato a `to`). */
+export function sampleGrid(from: IsoDate, to: IsoDate, stepDays = 1): IsoDate[] {
   const out: IsoDate[] = [];
   let d = from;
   let guard = 0;
-  while (d < to && guard++ < 520) {
+  while (d < to && guard++ < 7400) {
     out.push(d);
-    d = isoAddDays(d, 7);
+    d = isoAddDays(d, stepDays);
   }
   out.push(to);
   return out;
@@ -47,6 +50,9 @@ export interface TimelineInput {
   /** peso per-conto (id → quota), per distribuire conti compositi su più
    *  classi nelle serie. Assente o 1 = valore pieno. */
   weights?: Map<string, number>;
+  /** passo della griglia in giorni (default 1 = giornaliero). I conti manuali
+   *  restano a gradino; gli asset si muovono al passo dei prezzi campionati. */
+  stepDays?: number;
 }
 
 /** valore di una riga del patrimonio a una certa data (undefined = nessun dato) */
@@ -105,7 +111,9 @@ export function deriveValueSeries(input: TimelineInput): ValueSeries {
   const snapInRange = input.snapshots
     .map((s) => s.date)
     .filter((d) => d >= from && d <= input.asOf);
-  const grid = [...new Set([...weeklyGrid(from, input.asOf), ...snapInRange])].sort();
+  const grid = [
+    ...new Set([...sampleGrid(from, input.asOf, input.stepDays ?? 1), ...snapInRange]),
+  ].sort();
 
   const global: TimelinePoint[] = [];
   const byPortfolio = new Map<string, TimelinePoint[]>();
