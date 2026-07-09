@@ -26,13 +26,14 @@ export function releaseUrl(version: string): string {
 }
 
 export type UpdateCheck =
-  | { status: "current"; sha: string }
-  | { status: "stale"; sha: string; time: string }
+  | { status: "current"; sha: string; version: string }
+  | { status: "stale"; sha: string; time: string; version: string }
   | { status: "error"; message: string };
 
 /**
  * Scarica version.json dalla copia deployata (cache-busted) e lo confronta con
  * lo sha in esecuzione. "stale" = è uscita una build più recente: basta ricaricare.
+ * Espone anche la `version` (SemVer) per mostrarla al posto dello sha.
  */
 export async function checkLatest(): Promise<UpdateCheck> {
   try {
@@ -40,9 +41,14 @@ export async function checkLatest(): Promise<UpdateCheck> {
       cache: "no-store",
     });
     if (!res.ok) return { status: "error", message: `HTTP ${res.status}` };
-    const { sha, time } = (await res.json()) as { sha: string; time: string };
-    if (sha === APP_SHA) return { status: "current", sha };
-    return { status: "stale", sha, time };
+    const { sha, time, version } = (await res.json()) as {
+      sha: string;
+      time: string;
+      version?: string;
+    };
+    const ver = version ?? "?";
+    if (sha === APP_SHA) return { status: "current", sha, version: ver };
+    return { status: "stale", sha, time, version: ver };
   } catch (e) {
     return { status: "error", message: e instanceof Error ? e.message : String(e) };
   }

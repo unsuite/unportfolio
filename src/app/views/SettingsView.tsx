@@ -211,8 +211,10 @@ export function SettingsView() {
         )}
         {update?.status === "stale" && (
           <p className="mt-2 text-xs text-amber-400">
-            È disponibile una versione più recente ({update.sha}). Ricarica la pagina per
-            aggiornare.
+            {update.version !== "?" && update.version !== APP_VERSION
+              ? `È disponibile la versione v${update.version}. `
+              : `È disponibile una build più recente (${update.sha}). `}
+            Ricarica la pagina per aggiornare.
           </p>
         )}
         {update?.status === "error" && (

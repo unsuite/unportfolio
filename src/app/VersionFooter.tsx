@@ -34,7 +34,11 @@ export function VersionFooter() {
           type="button"
           onClick={() => window.location.reload()}
           className="rounded bg-amber-700 px-1.5 py-0.5 text-amber-50 hover:bg-amber-600"
-          title={`Disponibile ${update.sha}`}
+          title={
+            update.version !== "?" && update.version !== APP_VERSION
+              ? `Disponibile v${update.version}`
+              : `Disponibile build ${update.sha}`
+          }
         >
           aggiorna ↻
         </button>
