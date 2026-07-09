@@ -76,3 +76,49 @@ grazia il caso "scaffold non ancora presente", come fa l'e2e self-arming
   fallire la build.
 - − Una dipendenza pesante in più (Storybook + Vite) nel monorepo, solo per
   dev/docs.
+
+## Componenti condivisi (packages/ui) e styling
+
+### Context
+
+Le viste di `apps/web` contengono oggi tutta la UI inline con classi **Tailwind 4**
+(decine di `<button>`, `<input>`, `<select>`, `<table>` ripetuti). Vogliamo
+estrarre le primitive base in un package condiviso `@unportfolio/ui`, sviluppabile
+e documentabile in isolamento in Storybook, senza ricablare subito le viste.
+
+Serve scegliere come stilarle. Tailwind non è caricato dentro Storybook, quindi
+componenti stilati con classi Tailwind renderebbero nudi; cablare Tailwind nel Vite
+di `apps/design-system` accoppierebbe il catalogo condiviso al framework di utility
+dell'app.
+
+### Decision
+
+I componenti presentazionali di `@unportfolio/ui` si stilano con **CSS Modules**
+che consumano i token di `@unportfolio/ui-tokens` via `var(--token)` — **non** con
+Tailwind.
+
+- Ogni componente vive in `packages/ui/src/<Nome>/` con `<Nome>.tsx`,
+  `<Nome>.module.css` e `<Nome>.stories.tsx` co-locati.
+- Le classi CSS referenziano solo `var(--…)` dei token, mai valori grezzi
+  (coerente con la decisione sui design token qui sopra).
+- `@unportfolio/ui` è **presentazionale e puro**: riceve i dati via props e non
+  importa `@unportfolio/core`, lo store, il router o il filesystem — confine
+  imposto come per `packages/core` ([ADR-0002](./0002-architecture-and-boundaries.md)),
+  via override Biome e/o arch-test con `@unportfolio/test-utils`.
+- Storybook rende i componenti già stilati senza alcun build Tailwind; il catalogo
+  resta indipendente dal framework di utility dell'app.
+
+`apps/web` continua a usare Tailwind nelle proprie viste: la scelta CSS Modules
+vale per il catalogo condiviso `packages/ui`, non impone una migrazione dell'app.
+
+### Consequences
+
+- \+ Il catalogo condiviso rende stilato in Storybook senza cablare Tailwind, ed è
+  indipendente dal framework di utility.
+- \+ Stili incapsulati (scope locale dei CSS Modules) e ancorati ai token: un cambio
+  token si propaga ovunque.
+- − Due modelli di styling convivono (Tailwind nelle viste di `apps/web`, CSS
+  Modules in `packages/ui`) finché — e se — le viste verranno ricablate sui
+  componenti estratti.
+- − Nessuna parità automatica di classi con l'app: le varianti dei componenti vanno
+  ricavate osservando gli usi reali nelle viste.
