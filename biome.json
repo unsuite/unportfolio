@@ -34,6 +34,36 @@
       }
     },
     {
+      "includes": ["packages/ui/**"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "patterns": [
+                  {
+                    "group": [
+                      "@unportfolio/core",
+                      "@unportfolio/core/**",
+                      "@unportfolio/web",
+                      "@unportfolio/web/**",
+                      "**/app",
+                      "**/app/**",
+                      "@tanstack/**",
+                      "react-router",
+                      "react-router/**"
+                    ],
+                    "message": "@unportfolio/ui è presentazionale e puro: riceve dati via props, niente core/store/router/fs. Vedi ADR-0006 e ADR-0002."
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
       "includes": ["**/*.e2e.ts", "**/e2e/**/*.ts"],
       "plugins": [
         "./node_modules/@unportfolio/biome-config/no-react-internals.grit",

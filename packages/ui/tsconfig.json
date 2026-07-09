@@ -1,0 +1,10 @@
+{
+  "extends": "@unportfolio/typescript-config/browser.json",
+  "compilerOptions": {
+    "types": ["node"],
+    "paths": {
+      "@unportfolio/ui/*": ["./src/*"]
+    }
+  },
+  "include": ["src", "tests"]
+}
