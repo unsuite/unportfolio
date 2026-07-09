@@ -59,16 +59,22 @@ function injectSite(url: string): Plugin {
   };
 }
 
-/** Emette version.json nel build, così l'app può confrontare la versione deployata. */
+/** Emette version.json nel build e lo serve anche in dev, così il check
+ *  versione non becca l'index.html (SPA fallback) e in sviluppo risulta
+ *  sempre "aggiornato" invece di fallire il parse JSON. */
 function versionManifest(): Plugin {
+  const payload = JSON.stringify({ sha: BUILD_SHA, time: BUILD_TIME, version: APP_VERSION });
   return {
     name: "unportfolio-version-manifest",
-    generateBundle() {
-      this.emitFile({
-        type: "asset",
-        fileName: "version.json",
-        source: JSON.stringify({ sha: BUILD_SHA, time: BUILD_TIME, version: APP_VERSION }),
+    configureServer(server) {
+      server.middlewares.use((req, res, next) => {
+        if ((req.url ?? "").split("?")[0] !== "/version.json") return next();
+        res.setHeader("Content-Type", "application/json; charset=utf-8");
+        res.end(payload);
       });
+    },
+    generateBundle() {
+      this.emitFile({ type: "asset", fileName: "version.json", source: payload });
     },
   };
 }

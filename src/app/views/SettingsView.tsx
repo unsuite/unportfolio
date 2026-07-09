@@ -117,13 +117,15 @@ export function SettingsView() {
             revisione formato: cartella {s.dataFormat} · app {DATA_FORMAT}
           </span>
           <span className={`text-xs ${statusColor[status]}`}>{statusText[status]}</span>
-          {status !== "ok" && status !== "app-vecchia" && (
+          {/* sempre disponibile per ri-sincronizzare i file gestiti; nascosto solo
+              se è l'app a essere indietro (ri-migrare declasserebbe il marcatore) */}
+          {status !== "app-vecchia" && (
             <button
               onClick={updateFolder}
               disabled={migrating || s.busy}
               className="rounded bg-zinc-700 px-3 py-1.5 hover:bg-zinc-600 disabled:opacity-50"
             >
-              {migrating ? "Aggiorno…" : "Aggiorna cartella"}
+              {migrating ? "Aggiorno…" : status === "ok" ? "Ri-sincronizza" : "Aggiorna cartella"}
             </button>
           )}
         </div>
