@@ -23,6 +23,12 @@ sono molte e frequenti, quindi hanno il loro spazio.
    altro; scrivine una nuova e marca la vecchia `superseded by PDR-NNNN`. (Stessa
    regola degli ADR.)
 
+## Decisioni registrate
+
+| PDR | Titolo | Status | Review |
+|---|---|---|---|
+| [0001](./decisions/0001-direzione-visiva-registro.md) | Direzione visiva "Registro" (grotesk + mono, teal, light/dark) | accepted | Storybook `Product/Direzione visiva · Registro` |
+
 ## Rivedere un PDR (con stakeholder non tecnici)
 
 Il `.md` è la fonte di verità; **Storybook è la superficie di review**. Ogni PDR
