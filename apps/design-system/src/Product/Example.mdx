@@ -1,0 +1,39 @@
+import { Markdown, Meta } from "@storybook/addon-docs/blocks";
+import pdr from "../../../../docs/product/decisions/template.md?raw";
+
+<Meta title="Product/Example" />
+
+# Pagina decisione (esempio)
+
+Una pagina decisione **viva**: il markdown qui sotto è il template di
+`docs/product/decisions/`, importato `?raw` e renderizzato qui. Copia questo
+file in `src/Product/<Decisione>.mdx`, punta l'import al tuo PDR e incolla il
+prototipo. (La skill `product-decision` fa entrambe le cose.)
+
+<Markdown>{pdr}</Markdown>
+
+## Il futuro esplorato
+
+Incorpora qui il prototipo interattivo, così gli stakeholder possono *usarlo*
+accanto al razionale:
+
+<div
+  style={{
+    display: "grid",
+    placeItems: "center",
+    width: "100%",
+    height: 320,
+    border: "1px dashed var(--color-border, #ccc)",
+    borderRadius: 8,
+    color: "var(--color-text-muted, #888)",
+    fontFamily: "var(--font-sans, sans-serif)",
+  }}
+>
+  {'<iframe src="…prototipo…" /> va qui'}
+</div>
+
+## Il "prima"
+
+Gli screenshot del flusso legacy da `reference/` vanno qui — così una sola
+schermata racconta tutta la storia: da dove veniamo → cosa abbiamo esplorato →
+cosa abbiamo scelto.

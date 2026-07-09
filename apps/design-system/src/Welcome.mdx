@@ -1,0 +1,25 @@
+import { Meta } from "@storybook/addon-docs/blocks";
+
+<Meta title="Welcome" />
+
+# unportfolio — Design System
+
+Vetrina dei design token (`@unportfolio/ui-tokens`) e superficie di revisione
+delle decisioni di prodotto. Vedi [ADR-0006 (Design system)](../../../docs/adr/0006-design-system.md)
+e [ADR-0007 (Product & reference)](../../../docs/adr/0007-product-and-reference-spaces.md).
+
+## Com'è organizzato
+
+- **Foundations** — i design token (colori, spazi, tipografia) generati dalle
+  custom properties CSS di `@unportfolio/ui-tokens`.
+- **Product** — ogni decisione di prodotto (PDR in `docs/product/decisions/`)
+  viene renderizzata qui come pagina: si "battezza" il documento dandogli una
+  vetrina condivisa dove gli stakeholder rivedono legacy → prototipo → scelta.
+- **Components** — quando `apps/web` avrà storie co-locate (`*.stories.tsx`)
+  compariranno qui in automatico.
+
+## Aggiungere una decisione
+
+Usa la skill `product-decision`: crea il PDR da template e la pagina
+`src/Product/<Decisione>.mdx` che lo importa `?raw`, così il markdown resta
+l'unica fonte di verità.
