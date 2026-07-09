@@ -157,6 +157,7 @@ export async function openStore(store: DataStore): Promise<void> {
     // blocca le scritture se sotto il minimo (l'utente migra dal banner rosso)
     let dataFormat = parsed.config?.formatoDati ?? UNVERSIONED;
     let formatBlocked = false;
+    let resynced: string[] = [];
     const status = formatStatus(dataFormat);
     if (status === "richiesto") {
       formatBlocked = true;
@@ -169,10 +170,12 @@ export async function openStore(store: DataStore): Promise<void> {
     } else if (status === "ok") {
       // formato già allineato: riallinea comunque i file gestiti, così un
       // AGENTS.md aggiornato in una nuova build arriva senza bump di versione
-      await syncManagedFiles(store, files);
+      resynced = await syncManagedFiles(store, files);
     }
     emit({ store, files, ...parsed, dataFormat, formatBlocked, busy: false });
     console.debug("[unportfolio:fs] openStore: store aperto");
+    if (resynced.length > 0)
+      notify(`file gestiti aggiornati all'ultima versione: ${resynced.join(", ")}`);
     if (!formatBlocked) await reconcileAssetAccounts();
   } catch (e) {
     console.error("[unportfolio:fs] openStore: errore", e);
@@ -182,14 +185,18 @@ export async function openStore(store: DataStore): Promise<void> {
 }
 
 /** Riscrive i file gestiti (AGENTS.md) se differiscono dal contenuto della app,
- *  senza cambiare versione. Idempotente: tocca il disco solo se serve. */
-async function syncManagedFiles(store: DataStore, files: AppState["files"]): Promise<void> {
+ *  senza cambiare versione. Idempotente: tocca il disco solo se serve.
+ *  Ritorna i path effettivamente riscritti (per avvisarne l'utente). */
+async function syncManagedFiles(store: DataStore, files: AppState["files"]): Promise<string[]> {
+  const changed: string[] = [];
   for (const [path, text] of managedFiles()) {
     if (files.get(path)?.text === text) continue;
     const lastModified = await store.write(path as DataFilePath, text);
     files.set(path, { text, lastModified });
+    changed.push(path);
     console.debug(`[unportfolio:fs] file gestito riallineato: ${path}`);
   }
+  return changed;
 }
 
 /**
