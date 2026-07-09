@@ -1,0 +1,40 @@
+/**
+ * Stili del Link — consumano SOLO i token di @unportfolio/ui-tokens via
+ * var(--…) (ADR-0006). Gli stati hover/focus, per cui non esistono token
+ * dedicati, si derivano con color-mix() di token esistenti.
+ */
+
+.base {
+  font-family: var(--font-sans);
+  text-decoration: none;
+  cursor: pointer;
+  transition:
+    color 120ms ease,
+    text-decoration-color 120ms ease;
+}
+
+.base:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+  border-radius: var(--radius-sm);
+}
+
+/* Variant: accent (link d'azione) */
+.accent {
+  color: var(--color-accent);
+}
+.accent:hover {
+  color: color-mix(in srgb, var(--color-accent) 86%, var(--color-text));
+  text-decoration: underline;
+}
+
+/* Variant: muted (riferimento discreto in monospace) */
+.muted {
+  color: var(--color-text-muted);
+  font-family: var(--font-mono);
+  font-size: var(--font-size-sm);
+}
+.muted:hover {
+  color: var(--color-text);
+  text-decoration: underline;
+}

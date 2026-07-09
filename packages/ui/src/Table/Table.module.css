@@ -1,0 +1,60 @@
+/**
+ * Stili della Table — consumano SOLO i token di @unportfolio/ui-tokens via
+ * var(--…) (ADR-0006). Gli stati hover, per cui non esistono token dedicati,
+ * si derivano con color-mix() di token esistenti. Le cifre usano
+ * font-variant-numeric: tabular-nums (nessun token: vive nel CSS).
+ */
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-family: var(--font-sans);
+  font-size: var(--font-size-sm);
+  color: var(--color-text);
+}
+
+/* Intestazioni */
+.th {
+  padding: var(--space-1) var(--space-2);
+  font-weight: 500;
+  font-size: var(--font-size-xs);
+  color: var(--color-text-muted);
+  text-align: left;
+  border-bottom: 1px solid var(--color-border);
+}
+
+/* Celle */
+.td {
+  padding: var(--space-1) var(--space-2);
+}
+
+.right {
+  text-align: right;
+}
+
+.numeric {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Righe */
+.tr {
+  border-bottom: 1px solid color-mix(in srgb, var(--color-border) 60%, transparent);
+}
+
+.clickable {
+  cursor: pointer;
+  transition: background-color 120ms ease;
+}
+
+.clickable:hover {
+  background-color: color-mix(in srgb, var(--color-surface) 82%, var(--color-text));
+}
+
+.clickable:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}
+
+.muted {
+  opacity: 0.5;
+}

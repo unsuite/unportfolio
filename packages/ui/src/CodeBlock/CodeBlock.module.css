@@ -1,0 +1,38 @@
+/**
+ * Stili del CodeBlock — consumano SOLO i token di @unportfolio/ui-tokens via
+ * var(--…) (ADR-0006). La pill inline si deriva con color-mix() di token
+ * esistenti, senza token dedicati.
+ */
+
+.base {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Variant: block (comando/terminale) */
+.block {
+  margin: 0;
+  padding: var(--space-2) var(--space-3);
+  background-color: var(--color-bg);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  color: var(--color-text);
+  font-size: var(--font-size-xs);
+  line-height: 1.5;
+  overflow-x: auto;
+  white-space: pre;
+}
+
+/* Variant: inline (pill leggera nel testo) */
+.inline {
+  padding: var(--space-1) var(--space-2);
+  background-color: color-mix(in srgb, var(--color-surface) 82%, var(--color-text));
+  border-radius: var(--radius-sm);
+  color: var(--color-text);
+  font-size: var(--font-size-xs);
+  white-space: nowrap;
+}
+
+.selectAll {
+  user-select: all;
+}

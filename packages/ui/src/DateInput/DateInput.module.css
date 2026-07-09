@@ -1,0 +1,49 @@
+/**
+ * Stili del DateInput — consumano SOLO i token di @unportfolio/ui-tokens via
+ * var(--…) (ADR-0006). Gli stati hover/focus, per cui non esistono token
+ * dedicati, si derivano con color-mix() di token esistenti. La data usa
+ * font-variant-numeric: tabular-nums per cifre a larghezza costante.
+ */
+
+.base {
+  display: inline-flex;
+  align-items: center;
+  min-width: 0;
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background-color: var(--color-surface);
+  color: var(--color-text);
+  font-family: var(--font-sans);
+  font-size: var(--font-size-sm);
+  font-variant-numeric: tabular-nums;
+  line-height: 1.2;
+  transition:
+    border-color 120ms ease,
+    background-color 120ms ease;
+}
+
+.base:not(:disabled):hover {
+  border-color: color-mix(in srgb, var(--color-border) 60%, var(--color-text));
+}
+
+.base:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}
+
+.base:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Icona nativa del date-picker: la rendiamo leggibile sui fondi scuri. */
+.base::-webkit-calendar-picker-indicator {
+  cursor: pointer;
+  opacity: 0.7;
+  filter: invert(1);
+}
+
+.base:not(:disabled)::-webkit-calendar-picker-indicator:hover {
+  opacity: 1;
+}

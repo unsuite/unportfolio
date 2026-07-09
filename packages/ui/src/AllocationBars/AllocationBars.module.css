@@ -1,0 +1,65 @@
+/**
+ * Stili di AllocationBars — consumano SOLO i token di @unportfolio/ui-tokens
+ * via var(--…) (ADR-0006). Il track deriva dal color-mix di surface+text
+ * (nessun token dedicato per lo sfondo della barra); i numeri usano
+ * tabular-nums (nessun token, va nel CSS).
+ */
+
+.base {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  font-family: var(--font-sans);
+  font-size: var(--font-size-sm);
+}
+
+.empty {
+  margin: 0;
+  color: var(--color-text-muted);
+  font-size: var(--font-size-sm);
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.label {
+  width: 10rem;
+  flex-shrink: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  color: var(--color-text-muted);
+}
+
+.track {
+  flex: 1;
+  height: var(--space-3);
+  overflow: hidden;
+  border-radius: var(--radius-sm);
+  background-color: color-mix(in srgb, var(--color-surface) 70%, var(--color-text));
+}
+
+.fill {
+  height: 100%;
+  border-radius: var(--radius-sm);
+}
+
+.value {
+  width: 6rem;
+  flex-shrink: 0;
+  text-align: right;
+  color: var(--color-text);
+  font-variant-numeric: tabular-nums;
+}
+
+.percent {
+  width: 3.5rem;
+  flex-shrink: 0;
+  text-align: right;
+  color: var(--color-text-muted);
+  font-size: var(--font-size-xs);
+  font-variant-numeric: tabular-nums;
+}

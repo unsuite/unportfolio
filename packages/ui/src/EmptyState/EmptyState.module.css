@@ -1,0 +1,36 @@
+/**
+ * Stili dell'EmptyState — consumano SOLO i token di @unportfolio/ui-tokens
+ * via var(--…) (ADR-0006). Il colore muted e il font ridotto traducono la
+ * scala zinc delle viste dark-hardcoded ai token semantici.
+ */
+
+.base {
+  font-family: var(--font-sans);
+  color: var(--color-text-muted);
+}
+
+/* Variant: box (riquadro centrato a piena larghezza) */
+.box {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-3);
+  min-height: 176px;
+  padding: var(--space-4);
+  text-align: center;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background-color: var(--color-surface);
+  font-size: var(--font-size-sm);
+}
+
+/* Variant: inline (paragrafo muted) */
+.inline {
+  font-size: var(--font-size-sm);
+  line-height: 1.5;
+}
+
+.inline .action {
+  margin-top: var(--space-2);
+}

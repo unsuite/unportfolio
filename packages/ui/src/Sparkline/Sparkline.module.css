@@ -1,0 +1,30 @@
+/**
+ * Stili della Sparkline — consumano SOLO i token di @unportfolio/ui-tokens via
+ * var(--…) (ADR-0006). Il segno del trend mappa su --color-positive /
+ * --color-negative; nessun token dedicato agli stati.
+ */
+
+.base {
+  display: inline-block;
+  vertical-align: middle;
+}
+
+.base:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}
+
+.positive path {
+  stroke: var(--color-positive);
+}
+
+.negative path {
+  stroke: var(--color-negative);
+}
+
+.placeholder {
+  display: inline-block;
+  color: var(--color-text-muted);
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
