@@ -25,6 +25,7 @@
     "smol-toml": "^1.6.1"
   },
   "devDependencies": {
+    "@unportfolio/typescript-config": "workspace:*",
     "@tailwindcss/vite": "^4.3.0",
     "@types/node": "^25.9.3",
     "@types/react": "^18.3.12",

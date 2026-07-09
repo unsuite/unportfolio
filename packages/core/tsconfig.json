@@ -1,17 +1,7 @@
 {
+  "extends": "@unportfolio/typescript-config/base.json",
   "compilerOptions": {
-    "target": "ES2022",
     "lib": ["ES2022"],
-    "module": "ESNext",
-    "moduleResolution": "bundler",
-    "strict": true,
-    "noUncheckedIndexedAccess": true,
-    "noUnusedLocals": true,
-    "noUnusedParameters": true,
-    "noFallthroughCasesInSwitch": true,
-    "skipLibCheck": true,
-    "isolatedModules": true,
-    "noEmit": true,
     "types": ["node"],
     "paths": {
       "@unportfolio/core/*": ["./src/*.ts"]
