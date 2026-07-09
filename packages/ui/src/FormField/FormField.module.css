@@ -11,6 +11,12 @@
   font-family: var(--font-sans);
 }
 
+/* Il <label> non aggiunge box: i suoi figli partecipano al layout del wrapper,
+ * mentre la hint resta un fratello fuori dal label. */
+.field {
+  display: contents;
+}
+
 .row {
   display: flex;
 }

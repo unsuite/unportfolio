@@ -46,7 +46,13 @@ export function AllocationBars({
   className,
   ...rest
 }: AllocationBarsProps) {
-  const total = items.reduce((sum, item) => sum + Math.abs(item.value), 0);
+  // Come l'originale (charts.tsx): scarta i valori nulli e ordina per quota
+  // decrescente, così le fette più grandi vengono prima e non compaiono righe
+  // vuote allo 0%.
+  const entries = items
+    .filter((item) => item.value !== 0)
+    .sort((a, b) => Math.abs(b.value) - Math.abs(a.value));
+  const total = entries.reduce((sum, item) => sum + Math.abs(item.value), 0);
 
   const classes = [styles.base, className].filter(Boolean).join(" ");
 
@@ -60,7 +66,7 @@ export function AllocationBars({
 
   return (
     <div className={classes} {...rest}>
-      {items.map((item, index) => {
+      {entries.map((item, index) => {
         const pct = (Math.abs(item.value) / total) * 100;
         const fill = item.color ?? CHART_TOKENS[index % CHART_TOKENS.length];
         return (

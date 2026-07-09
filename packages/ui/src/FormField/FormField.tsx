@@ -50,13 +50,17 @@ export function FormField({
     </span>
   );
 
+  // La hint è resa FUORI dal <label>: un <p> non può stare dentro <label> e,
+  // col label implicito, finirebbe nel nome accessibile del controllo.
   return (
-    <label className={classes} htmlFor={htmlFor} {...rest}>
-      <span className={styles.row}>
-        {caption}
-        <span className={styles.control}>{children}</span>
-      </span>
+    <div className={classes}>
+      <label className={styles.field} htmlFor={htmlFor} {...rest}>
+        <span className={styles.row}>
+          {caption}
+          <span className={styles.control}>{children}</span>
+        </span>
+      </label>
       {hint && <HelpText className={styles.hint}>{hint}</HelpText>}
-    </label>
+    </div>
   );
 }

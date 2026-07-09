@@ -1,4 +1,4 @@
-import type { SVGAttributes } from "react";
+import type { HTMLAttributes, SVGAttributes } from "react";
 import styles from "./Sparkline.module.css";
 
 /**
@@ -43,7 +43,14 @@ export function Sparkline({
   const classes = [styles.base, className].filter(Boolean).join(" ");
 
   if (values.length < 2) {
-    return <span className={[styles.placeholder, className].filter(Boolean).join(" ")}>—</span>;
+    return (
+      <span
+        className={[styles.placeholder, className].filter(Boolean).join(" ")}
+        {...(rest as HTMLAttributes<HTMLSpanElement>)}
+      >
+        —
+      </span>
+    );
   }
 
   const positive = (values.at(-1) ?? 0) >= (values.at(0) ?? 0);

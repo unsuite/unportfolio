@@ -103,7 +103,6 @@ export function Tr({
       className={classes}
       onClick={onClick}
       onKeyDown={handleKeyDown}
-      role={interactive ? "button" : undefined}
       tabIndex={interactive ? 0 : undefined}
       {...rest}
     >

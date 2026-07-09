@@ -1,56 +1,14 @@
 /**
- * Stili del NumberInput — consumano SOLO i token di @unportfolio/ui-tokens via
- * var(--…) (ADR-0006). Gli stati hover/focus, per cui non esistono token
- * dedicati, si derivano con color-mix() di token esistenti. I numeri sono
- * allineati a destra con cifre tabellari (font-variant-numeric: tabular-nums,
- * nessun token: va nel CSS).
+ * Stili del NumberInput — incorpora la base condivisa dei campi
+ * (field/field.module.css) via `composes` ed è numerico per natura (allineato
+ * a destra, cifre tabellari). Solo var(--token) (ADR-0006).
  */
 
 .input {
-  display: block;
-  width: 100%;
-  padding: var(--space-2) var(--space-3);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-md);
-  background-color: var(--color-surface);
-  color: var(--color-text);
-  font-family: var(--font-mono);
-  font-size: var(--font-size-sm);
-  line-height: 1.2;
-  text-align: right;
-  font-variant-numeric: tabular-nums;
-  transition:
-    border-color 120ms ease,
-    background-color 120ms ease;
+  composes: field numeric from "../field/field.module.css";
 }
 
-.input::placeholder {
-  color: var(--color-text-muted);
-}
-
-.input:not(:disabled):hover {
-  border-color: color-mix(in srgb, var(--color-border) 60%, var(--color-text));
-}
-
-.input:focus-visible {
-  outline: 2px solid var(--color-accent);
-  outline-offset: 2px;
-}
-
-.input:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-/* Stato: valore non valido */
+/* Stato: valore non valido (bordo negativo, mantenuto anche in hover) */
 .invalid {
-  border-color: var(--color-negative);
-}
-
-.invalid:not(:disabled):hover {
-  border-color: color-mix(in srgb, var(--color-negative) 80%, var(--color-text));
-}
-
-.invalid:focus-visible {
-  outline-color: var(--color-negative);
+  composes: invalid from "../field/field.module.css";
 }
