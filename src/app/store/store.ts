@@ -166,6 +166,10 @@ export async function openStore(store: DataStore): Promise<void> {
       parsed = reparse(files);
       dataFormat = parsed.config?.formatoDati ?? DATA_FORMAT;
       console.debug(`[unportfolio:fs] formato aggiornato a v${dataFormat}`);
+    } else if (status === "ok") {
+      // formato già allineato: riallinea comunque i file gestiti, così un
+      // AGENTS.md aggiornato in una nuova build arriva senza bump di versione
+      await syncManagedFiles(store, files);
     }
     emit({ store, files, ...parsed, dataFormat, formatBlocked, busy: false });
     console.debug("[unportfolio:fs] openStore: store aperto");
@@ -174,6 +178,17 @@ export async function openStore(store: DataStore): Promise<void> {
     console.error("[unportfolio:fs] openStore: errore", e);
     emit({ busy: false });
     notify(`errore apertura cartella: ${String(e)}`);
+  }
+}
+
+/** Riscrive i file gestiti (AGENTS.md) se differiscono dal contenuto della app,
+ *  senza cambiare versione. Idempotente: tocca il disco solo se serve. */
+async function syncManagedFiles(store: DataStore, files: AppState["files"]): Promise<void> {
+  for (const [path, text] of managedFiles()) {
+    if (files.get(path)?.text === text) continue;
+    const lastModified = await store.write(path as DataFilePath, text);
+    files.set(path, { text, lastModified });
+    console.debug(`[unportfolio:fs] file gestito riallineato: ${path}`);
   }
 }
 

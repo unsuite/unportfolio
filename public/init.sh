@@ -160,10 +160,28 @@ fava ledger/main.beancount                              # UI web
 
 - `patrimonio.toml` — righe del Patrimonio (sezione, owner, portfolio, split).
   L'**etichetta** mostrata di uno strumento è il campo `nome` qui.
-- `goals.toml` — obiettivi. `targets.toml` — pesi target del ribilanciamento.
+- `goals.toml` — obiettivi. `targets.toml` — pesi target del ribilanciamento (vedi sotto).
 - `snapshots.csv` — saldi manuali periodici. Header: `date,account_id,value,currency`.
 - `config.toml` — `percorso_dati` (path assoluto, annotato dal CLI) e `[prezzi]`
   (`anni`, `intervallo`) che definisce la copertura dello storico.
+
+## Ribilanciamento (targets.toml)
+
+Per ogni `(portfolio, commodity)` `targets.toml` tiene il peso target `peso`
+(frazione 0..1) e due flag opzionali che cambiano come lo strumento entra nel
+calcolo. **Attenzione a non confonderli:**
+
+- `fisso = true` — posizione **congelata**: non si compra **né si vende**, resta
+  al valore corrente (ideale = corrente, "da comprare" = 0). Il suo peso **conta
+  ancora** nella percentuale target mostrata, ma il suo valore **esce dal
+  montante** da ridistribuire: gli altri si spartiscono `(totale + liquidità −
+  fissi)` coi loro pesi rinormalizzati.
+- `escluso = true` — **fuori da tutta la matematica**: non entra nel totale, nelle
+  percentuali né nel montante, e non ha ideale né "da comprare". Non è solo
+  "fuori dai pesi": è ignorato del tutto (riga di solo promemoria).
+
+I due flag sono **mutuamente esclusivi**. Uno strumento senza flag con `peso > 0`
+è un normale target ribilanciabile; se non ha riga in `targets.toml` vale 0.
 
 ## Aggiornare i prezzi (CLI)
 
