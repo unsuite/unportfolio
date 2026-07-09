@@ -1,9 +1,9 @@
+import { book, type InstrumentPosition } from "@unportfolio/core/beancount/booking";
+import { parse } from "@unportfolio/core/beancount/parser";
+import { missingAssetAccounts } from "@unportfolio/core/config/reconcile";
+import type { CommodityInfo } from "@unportfolio/core/derive/assets";
+import type { PatrimonioAccount } from "@unportfolio/core/model/config";
 import { describe, expect, it } from "vitest";
-import { book, type InstrumentPosition } from "../src/core/beancount/booking";
-import { parse } from "../src/core/beancount/parser";
-import { missingAssetAccounts } from "../src/core/config/reconcile";
-import type { CommodityInfo } from "../src/core/derive/assets";
-import type { PatrimonioAccount } from "../src/core/model/config";
 
 const commodities = new Map<string, CommodityInfo>([
   [

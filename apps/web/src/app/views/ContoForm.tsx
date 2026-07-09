@@ -1,6 +1,6 @@
+import { accountSlug } from "@unportfolio/core/config/codecs";
+import type { PatrimonioAccount, Sezione } from "@unportfolio/core/model/config";
 import { useState } from "react";
-import { accountSlug } from "../../core/config/codecs";
-import type { PatrimonioAccount, Sezione } from "../../core/model/config";
 import { useApp } from "../store/selectors";
 import { deletePatrimonioAccount, upsertPatrimonioAccount } from "../store/store";
 

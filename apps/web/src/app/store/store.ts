@@ -1,8 +1,7 @@
-import type { Decimal } from "decimal.js";
-import type { Directive, IsoDate, LedgerFile } from "../../core/beancount/ast";
-import { book } from "../../core/beancount/booking";
-import { parse } from "../../core/beancount/parser";
-import { formatDirective, serialize } from "../../core/beancount/serializer";
+import type { Directive, IsoDate, LedgerFile } from "@unportfolio/core/beancount/ast";
+import { book } from "@unportfolio/core/beancount/booking";
+import { parse } from "@unportfolio/core/beancount/parser";
+import { formatDirective, serialize } from "@unportfolio/core/beancount/serializer";
 import {
   parseAccounts,
   parseConfig,
@@ -11,11 +10,16 @@ import {
   parseTargets,
   serializeConfig,
   serializeSnapshots,
-} from "../../core/config/codecs";
-import { DATA_FORMAT, formatStatus, runMigrations, UNVERSIONED } from "../../core/config/format";
-import { missingAssetAccounts } from "../../core/config/reconcile";
+} from "@unportfolio/core/config/codecs";
+import {
+  DATA_FORMAT,
+  formatStatus,
+  runMigrations,
+  UNVERSIONED,
+} from "@unportfolio/core/config/format";
+import { missingAssetAccounts } from "@unportfolio/core/config/reconcile";
 // (i codec per i salvataggi CRUD sono importati dinamicamente nelle funzioni)
-import { readCommodityInfo } from "../../core/derive/assets";
+import { readCommodityInfo } from "@unportfolio/core/derive/assets";
 import type {
   AppConfig,
   Deposito,
@@ -23,7 +27,8 @@ import type {
   PatrimonioAccount,
   RebalanceTarget,
   SnapshotEntry,
-} from "../../core/model/config";
+} from "@unportfolio/core/model/config";
+import type { Decimal } from "decimal.js";
 import { type DataFilePath, type DataStore, managedFiles, skeletonFiles } from "../fs/fileSystem";
 
 export interface AppState {
@@ -260,7 +265,7 @@ export async function reconcileAssetAccounts(): Promise<boolean> {
   const { positions } = book(directives, { operatingCurrency: state.config.operatingCurrency });
   const missing = missingAssetAccounts(positions, commodities, state.accounts);
   if (missing.length === 0) return false;
-  const { serializeAccounts } = await import("../../core/config/codecs");
+  const { serializeAccounts } = await import("@unportfolio/core/config/codecs");
   const next = [...state.accounts, ...missing];
   const ok = await writeFile("patrimonio.toml", serializeAccounts(next));
   if (ok)
@@ -356,7 +361,7 @@ export function setQuotes(quotes: Map<string, Decimal>): void {
 
 /** Inserisce o aggiorna una riga di patrimonio.toml (merge per id). */
 export async function upsertPatrimonioAccount(account: PatrimonioAccount): Promise<boolean> {
-  const { serializeAccounts } = await import("../../core/config/codecs");
+  const { serializeAccounts } = await import("@unportfolio/core/config/codecs");
   const existing = state.accounts.findIndex((a) => a.id === account.id);
   const next =
     existing >= 0
@@ -367,25 +372,25 @@ export async function upsertPatrimonioAccount(account: PatrimonioAccount): Promi
 
 /** Elimina una riga di patrimonio.toml. */
 export async function deletePatrimonioAccount(id: string): Promise<boolean> {
-  const { serializeAccounts } = await import("../../core/config/codecs");
+  const { serializeAccounts } = await import("@unportfolio/core/config/codecs");
   return writeFile("patrimonio.toml", serializeAccounts(state.accounts.filter((a) => a.id !== id)));
 }
 
 /** Sostituisce l'elenco goals (goals.toml). */
 export async function saveGoals(goals: Goal[]): Promise<boolean> {
-  const { serializeGoals } = await import("../../core/config/codecs");
+  const { serializeGoals } = await import("@unportfolio/core/config/codecs");
   return writeFile("goals.toml", serializeGoals(goals));
 }
 
 /** Sostituisce i target di ribilanciamento (targets.toml). */
 export async function saveTargets(targets: RebalanceTarget[]): Promise<boolean> {
-  const { serializeTargets } = await import("../../core/config/codecs");
+  const { serializeTargets } = await import("@unportfolio/core/config/codecs");
   return writeFile("targets.toml", serializeTargets(targets));
 }
 
 /** Merge parziale di config.toml (usato dall'editor del grafo di esubero). */
 export async function updateConfig(patch: Partial<AppConfig>): Promise<boolean> {
-  const { serializeConfig } = await import("../../core/config/codecs");
+  const { serializeConfig } = await import("@unportfolio/core/config/codecs");
   return writeFile("config.toml", serializeConfig({ ...state.config, ...patch }));
 }
 
@@ -406,7 +411,7 @@ export async function deleteDeposito(id: string): Promise<boolean> {
   if (!ok) return false;
   const referenced = state.accounts.filter((a) => a.deposito === id);
   if (referenced.length === 0) return ok;
-  const { serializeAccounts } = await import("../../core/config/codecs");
+  const { serializeAccounts } = await import("@unportfolio/core/config/codecs");
   const next = state.accounts.map((a) => (a.deposito === id ? { ...a, deposito: undefined } : a));
   return writeFile("patrimonio.toml", serializeAccounts(next));
 }
@@ -448,7 +453,7 @@ export async function renameDeposito(oldId: string, newId: string): Promise<bool
     if (a.commodity && !a.deposito && heldByNew.has(a.commodity)) return { ...a, deposito: newId };
     return a;
   });
-  const { serializeAccounts } = await import("../../core/config/codecs");
+  const { serializeAccounts } = await import("@unportfolio/core/config/codecs");
   await writeFile("patrimonio.toml", serializeAccounts(accounts));
   notify(`conto titoli rinominato in "${newId}" e storico agganciato`);
   return true;

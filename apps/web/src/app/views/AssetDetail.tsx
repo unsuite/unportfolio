@@ -1,5 +1,5 @@
+import type { AssetRow } from "@unportfolio/core/derive/assets";
 import { useState } from "react";
-import type { AssetRow } from "../../core/derive/assets";
 import { fmtPct } from "../store/selectors";
 import { updateCommodityMeta } from "../store/store";
 

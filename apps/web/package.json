@@ -16,6 +16,7 @@
     "typecheck": "tsc -b"
   },
   "dependencies": {
+    "@unportfolio/core": "workspace:*",
     "@tanstack/react-table": "^8.21.3",
     "decimal.js": "^10.4.3",
     "lucide-react": "^1.18.0",

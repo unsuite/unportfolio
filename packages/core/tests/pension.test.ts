@@ -1,5 +1,5 @@
+import { computePension, type PensionInput } from "@unportfolio/core/math/pension";
 import { describe, expect, it } from "vitest";
-import { computePension, type PensionInput } from "../src/core/math/pension";
 
 // Caso di riferimento preso dal "foglio 3" dell'utente, verificato al centesimo.
 const REF: PensionInput = {

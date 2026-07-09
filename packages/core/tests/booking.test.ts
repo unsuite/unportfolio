@@ -1,9 +1,9 @@
+import { book, holdingKey } from "@unportfolio/core/beancount/booking";
+import { parse } from "@unportfolio/core/beancount/parser";
+import { projectToMaturity, remainingCoupons } from "@unportfolio/core/math/bond";
+import { xirr } from "@unportfolio/core/math/xirr";
 import { Decimal } from "decimal.js";
 import { describe, expect, it } from "vitest";
-import { book, holdingKey } from "../src/core/beancount/booking";
-import { parse } from "../src/core/beancount/parser";
-import { projectToMaturity, remainingCoupons } from "../src/core/math/bond";
-import { xirr } from "../src/core/math/xirr";
 
 const LEDGER = `
 2024-02-12 * "Directa" "Conferimento con bonifico"

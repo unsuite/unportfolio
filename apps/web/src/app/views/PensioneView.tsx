@@ -1,9 +1,9 @@
+import { serializeConfig } from "@unportfolio/core/config/codecs";
+import { portfolioCurrents } from "@unportfolio/core/derive/patrimonio";
+import { computePension, type PensionResult } from "@unportfolio/core/math/pension";
+import type { PensionProfile } from "@unportfolio/core/model/config";
 import type { Decimal } from "decimal.js";
 import { useRef, useState } from "react";
-import { serializeConfig } from "../../core/config/codecs";
-import { portfolioCurrents } from "../../core/derive/patrimonio";
-import { computePension, type PensionResult } from "../../core/math/pension";
-import type { PensionProfile } from "../../core/model/config";
 import { fmtEur, useApp, useDerived } from "../store/selectors";
 import { writeFile } from "../store/store";
 

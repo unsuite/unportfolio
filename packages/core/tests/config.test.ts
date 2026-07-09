@@ -1,11 +1,11 @@
-import { describe, expect, it } from "vitest";
 import {
   parseConfig,
   parseTargets,
   serializeConfig,
   serializeTargets,
-} from "../src/core/config/codecs";
-import type { RebalanceTarget } from "../src/core/model/config";
+} from "@unportfolio/core/config/codecs";
+import type { RebalanceTarget } from "@unportfolio/core/model/config";
+import { describe, expect, it } from "vitest";
 
 describe("config [[pensione]]", () => {
   it("parsa più profili da config.toml", () => {

@@ -1,10 +1,10 @@
+import { book } from "@unportfolio/core/beancount/booking";
+import { parse } from "@unportfolio/core/beancount/parser";
+import { deriveAssets, readCommodityInfo } from "@unportfolio/core/derive/assets";
+import { buildPriceTable, priceAt } from "@unportfolio/core/derive/prices";
+import { twrr } from "@unportfolio/core/math/twrr";
 import { Decimal } from "decimal.js";
 import { describe, expect, it } from "vitest";
-import { book } from "../src/core/beancount/booking";
-import { parse } from "../src/core/beancount/parser";
-import { deriveAssets, readCommodityInfo } from "../src/core/derive/assets";
-import { buildPriceTable, priceAt } from "../src/core/derive/prices";
-import { twrr } from "../src/core/math/twrr";
 
 const D = (n: number | string) => new Decimal(n);
 

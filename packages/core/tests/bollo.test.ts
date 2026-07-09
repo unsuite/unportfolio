@@ -1,9 +1,9 @@
+import type { IsoDate } from "@unportfolio/core/beancount/ast";
+import { deriveBolloTitoli } from "@unportfolio/core/derive/bollo";
+import type { PatrimonioRow } from "@unportfolio/core/derive/patrimonio";
+import type { Deposito, PatrimonioAccount } from "@unportfolio/core/model/config";
 import { Decimal } from "decimal.js";
 import { describe, expect, it } from "vitest";
-import type { IsoDate } from "../src/core/beancount/ast";
-import { deriveBolloTitoli } from "../src/core/derive/bollo";
-import type { PatrimonioRow } from "../src/core/derive/patrimonio";
-import type { Deposito, PatrimonioAccount } from "../src/core/model/config";
 
 function account(id: string, deposito?: string): PatrimonioAccount {
   const a: PatrimonioAccount = {

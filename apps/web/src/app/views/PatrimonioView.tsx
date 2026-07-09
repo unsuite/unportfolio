@@ -1,20 +1,20 @@
-import { Decimal } from "decimal.js";
-import { ChevronsDownUp, ChevronsUpDown, Pencil, Plus } from "lucide-react";
-import { Fragment, type ReactNode, useMemo, useState } from "react";
-import type { IsoDate, TransactionDirective } from "../../core/beancount/ast";
-import { book, holdingKey } from "../../core/beancount/booking";
-import { type AssetRow, type CommodityInfo, deriveAssets } from "../../core/derive/assets";
-import { deriveBolloTitoli } from "../../core/derive/bollo";
-import { deriveManualReturn } from "../../core/derive/manualReturn";
-import type { PatrimonioRow, PatrimonioStatement } from "../../core/derive/patrimonio";
-import type { PriceTable } from "../../core/derive/prices";
-import { deriveReturns } from "../../core/derive/returns";
+import type { IsoDate, TransactionDirective } from "@unportfolio/core/beancount/ast";
+import { book, holdingKey } from "@unportfolio/core/beancount/booking";
+import { type AssetRow, type CommodityInfo, deriveAssets } from "@unportfolio/core/derive/assets";
+import { deriveBolloTitoli } from "@unportfolio/core/derive/bollo";
+import { deriveManualReturn } from "@unportfolio/core/derive/manualReturn";
+import type { PatrimonioRow, PatrimonioStatement } from "@unportfolio/core/derive/patrimonio";
+import type { PriceTable } from "@unportfolio/core/derive/prices";
+import { deriveReturns } from "@unportfolio/core/derive/returns";
 import {
   deriveGroupStats,
   deriveValueSeries,
   type TimelinePoint,
-} from "../../core/derive/timeline";
-import type { PatrimonioAccount } from "../../core/model/config";
+} from "@unportfolio/core/derive/timeline";
+import type { PatrimonioAccount } from "@unportfolio/core/model/config";
+import { Decimal } from "decimal.js";
+import { ChevronsDownUp, ChevronsUpDown, Pencil, Plus } from "lucide-react";
+import { Fragment, type ReactNode, useMemo, useState } from "react";
 import { fmtEur, fmtNum, fmtPct, useApp, useDerived } from "../store/selectors";
 import { allDirectives } from "../store/store";
 import { gainColor, holdingLabel, NameEditor, TaxEditInline } from "./AssetDetail";

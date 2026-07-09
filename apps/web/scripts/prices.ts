@@ -14,13 +14,13 @@
 //   npx vite-node scripts/prices.ts -- <cartella-dati> --set X.WBIT=yahoo:WBTC.PA
 import { readFileSync, writeFileSync } from "node:fs";
 import { join, resolve } from "node:path";
+import type { PriceDirective } from "@unportfolio/core/beancount/ast";
+import { parse } from "@unportfolio/core/beancount/parser";
+import { formatDirective, serialize } from "@unportfolio/core/beancount/serializer";
+import { parseConfig } from "@unportfolio/core/config/codecs";
+import { readCommodityInfo } from "@unportfolio/core/derive/assets";
+import { buildPriceTable, hasSample } from "@unportfolio/core/derive/prices";
 import { Decimal } from "decimal.js";
-import type { PriceDirective } from "../src/core/beancount/ast";
-import { parse } from "../src/core/beancount/parser";
-import { formatDirective, serialize } from "../src/core/beancount/serializer";
-import { parseConfig } from "../src/core/config/codecs";
-import { readCommodityInfo } from "../src/core/derive/assets";
-import { buildPriceTable, hasSample } from "../src/core/derive/prices";
 
 const UA = { "User-Agent": "Mozilla/5.0 (unportfolio prices)" };
 

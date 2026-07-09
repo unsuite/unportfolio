@@ -1,9 +1,9 @@
+import type { IsoDate } from "@unportfolio/core/beancount/ast";
+import { goalTarget } from "@unportfolio/core/config/codecs";
+import { deriveGoalStatus } from "@unportfolio/core/derive/goalStatus";
+import { portfolioCurrents } from "@unportfolio/core/derive/patrimonio";
+import type { Goal } from "@unportfolio/core/model/config";
 import { useMemo, useState } from "react";
-import type { IsoDate } from "../../core/beancount/ast";
-import { goalTarget } from "../../core/config/codecs";
-import { deriveGoalStatus } from "../../core/derive/goalStatus";
-import { portfolioCurrents } from "../../core/derive/patrimonio";
-import type { Goal } from "../../core/model/config";
 import { fmtEur, fmtPct, useApp, useDerived } from "../store/selectors";
 import { saveGoals } from "../store/store";
 import { EsuberoGraph } from "./EsuberoGraph";

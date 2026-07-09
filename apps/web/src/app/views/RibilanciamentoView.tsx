@@ -1,7 +1,7 @@
+import { rebalance } from "@unportfolio/core/derive/rebalance";
+import type { RebalanceTarget } from "@unportfolio/core/model/config";
 import { Decimal } from "decimal.js";
 import { useMemo, useState } from "react";
-import { rebalance } from "../../core/derive/rebalance";
-import type { RebalanceTarget } from "../../core/model/config";
 import { fmtEur, fmtPct, useApp, useDerived } from "../store/selectors";
 import { saveTargets } from "../store/store";
 

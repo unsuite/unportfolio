@@ -1,6 +1,6 @@
+import type { IsoDate } from "@unportfolio/core/beancount/ast";
+import type { PatrimonioAccount, SnapshotEntry } from "@unportfolio/core/model/config";
 import { useMemo, useState } from "react";
-import type { IsoDate } from "../../core/beancount/ast";
-import type { PatrimonioAccount, SnapshotEntry } from "../../core/model/config";
 import { fmtEur, todayIso } from "../store/selectors";
 import { addSnapshotEntries, removeSnapshotEntry } from "../store/store";
 

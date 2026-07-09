@@ -1,6 +1,6 @@
+import { type RebalanceInput, rebalance } from "@unportfolio/core/derive/rebalance";
 import { Decimal } from "decimal.js";
 import { describe, expect, it } from "vitest";
-import { type RebalanceInput, rebalance } from "../src/core/derive/rebalance";
 
 const mk = (
   commodity: string,

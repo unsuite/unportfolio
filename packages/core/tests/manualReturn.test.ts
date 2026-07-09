@@ -1,6 +1,6 @@
+import { deriveManualReturn } from "@unportfolio/core/derive/manualReturn";
+import type { PatrimonioAccount, SnapshotEntry } from "@unportfolio/core/model/config";
 import { describe, expect, it } from "vitest";
-import { deriveManualReturn } from "../src/core/derive/manualReturn";
-import type { PatrimonioAccount, SnapshotEntry } from "../src/core/model/config";
 
 const base: PatrimonioAccount = {
   id: "dep",

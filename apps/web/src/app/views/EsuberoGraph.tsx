@@ -1,8 +1,14 @@
+import type { PortfolioStatus } from "@unportfolio/core/derive/goalStatus";
+import { hasCycle, linearChain, singleOutgoing } from "@unportfolio/core/derive/goalStatus";
+import {
+  autoLayout,
+  layoutBounds,
+  NODE_H,
+  NODE_W,
+  type Pos,
+} from "@unportfolio/core/derive/graphLayout";
+import type { EsuberoFlusso } from "@unportfolio/core/model/config";
 import { useEffect, useMemo, useRef, useState } from "react";
-import type { PortfolioStatus } from "../../core/derive/goalStatus";
-import { hasCycle, linearChain, singleOutgoing } from "../../core/derive/goalStatus";
-import { autoLayout, layoutBounds, NODE_H, NODE_W, type Pos } from "../../core/derive/graphLayout";
-import type { EsuberoFlusso } from "../../core/model/config";
 import { fmtEur, useApp } from "../store/selectors";
 import { updateConfig } from "../store/store";
 

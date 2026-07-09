@@ -1,5 +1,5 @@
+import { dataVersionLabel, formatStatus } from "@unportfolio/core/config/format";
 import { useState } from "react";
-import { dataVersionLabel, formatStatus } from "../../core/config/format";
 import { pickDirectory } from "../fs/fileSystem";
 import { useApp } from "../store/selectors";
 import { logout, migrateStore, openStore } from "../store/store";

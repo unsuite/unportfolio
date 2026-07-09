@@ -1,9 +1,9 @@
+import type { Directive, Posting, TransactionDirective } from "@unportfolio/core/beancount/ast";
+import { parse } from "@unportfolio/core/beancount/parser";
+import { formatDirective, serialize } from "@unportfolio/core/beancount/serializer";
 import { Decimal } from "decimal.js";
 import fc from "fast-check";
 import { describe, expect, it } from "vitest";
-import type { Directive, Posting, TransactionDirective } from "../src/core/beancount/ast";
-import { parse } from "../src/core/beancount/parser";
-import { formatDirective, serialize } from "../src/core/beancount/serializer";
 
 const FIXTURE = `option "title" "Net Worth"
 option "operating_currency" "EUR"

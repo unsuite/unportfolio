@@ -1,8 +1,6 @@
-import { Decimal } from "decimal.js";
-import { describe, expect, it } from "vitest";
-import { book } from "../src/core/beancount/booking";
-import { parse } from "../src/core/beancount/parser";
-import * as codecs from "../src/core/config/codecs";
+import { book } from "@unportfolio/core/beancount/booking";
+import { parse } from "@unportfolio/core/beancount/parser";
+import * as codecs from "@unportfolio/core/config/codecs";
 import {
   goalTarget,
   parseAccounts,
@@ -11,12 +9,14 @@ import {
   serializeAccounts,
   serializeGoals,
   serializeSnapshots,
-} from "../src/core/config/codecs";
-import { deriveAssets, readCommodityInfo } from "../src/core/derive/assets";
-import { deriveGoalStatus, linearChain } from "../src/core/derive/goalStatus";
-import { derivePatrimonio, portfolioCurrents } from "../src/core/derive/patrimonio";
-import { buildPriceTable, hasSample, priceAt } from "../src/core/derive/prices";
-import type { Goal } from "../src/core/model/config";
+} from "@unportfolio/core/config/codecs";
+import { deriveAssets, readCommodityInfo } from "@unportfolio/core/derive/assets";
+import { deriveGoalStatus, linearChain } from "@unportfolio/core/derive/goalStatus";
+import { derivePatrimonio, portfolioCurrents } from "@unportfolio/core/derive/patrimonio";
+import { buildPriceTable, hasSample, priceAt } from "@unportfolio/core/derive/prices";
+import type { Goal } from "@unportfolio/core/model/config";
+import { Decimal } from "decimal.js";
+import { describe, expect, it } from "vitest";
 
 const LEDGER = `
 2024-01-01 commodity VWCE

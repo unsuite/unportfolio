@@ -1,11 +1,11 @@
-import { Settings } from "lucide-react";
-import { useState } from "react";
-import { sanitizeAccountSegment } from "../../core/import/mapping";
+import { sanitizeAccountSegment } from "@unportfolio/core/import/mapping";
 import {
   type BolloPeriodicita,
   DEFAULT_BOLLO_ALIQUOTA,
   type Deposito,
-} from "../../core/model/config";
+} from "@unportfolio/core/model/config";
+import { Settings } from "lucide-react";
+import { useState } from "react";
 import { useApp } from "../store/selectors";
 import { deleteDeposito, renameDeposito, upsertDeposito } from "../store/store";
 

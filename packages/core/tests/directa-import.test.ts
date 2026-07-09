@@ -1,8 +1,12 @@
+import { book, holdingKey } from "@unportfolio/core/beancount/booking";
+import {
+  directaImporter,
+  parseItalianDate,
+  parseItalianNumber,
+} from "@unportfolio/core/import/directa";
+import { mapMovimenti } from "@unportfolio/core/import/mapping";
+import type { InstrumentInfo } from "@unportfolio/core/model/movimento";
 import { describe, expect, it } from "vitest";
-import { book, holdingKey } from "../src/core/beancount/booking";
-import { directaImporter, parseItalianDate, parseItalianNumber } from "../src/core/import/directa";
-import { mapMovimenti } from "../src/core/import/mapping";
-import type { InstrumentInfo } from "../src/core/model/movimento";
 
 const CSV = [
   "Estratto conto Directa - conto 12345",

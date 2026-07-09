@@ -1,6 +1,6 @@
+import type { deriveGroupStats, TimelinePoint } from "@unportfolio/core/derive/timeline";
 import type { Decimal } from "decimal.js";
 import { useRef, useState } from "react";
-import type { deriveGroupStats, TimelinePoint } from "../../core/derive/timeline";
 import { fmtEur } from "../store/selectors";
 
 export const eurCompact = new Intl.NumberFormat("it-IT", {

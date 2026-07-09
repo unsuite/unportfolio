@@ -29,6 +29,9 @@ importers:
       '@tanstack/react-table':
         specifier: ^8.21.3
         version: 8.21.3(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+      '@unportfolio/core':
+        specifier: workspace:*
+        version: link:../../packages/core
       decimal.js:
         specifier: ^10.4.3
         version: 10.6.0
@@ -75,6 +78,28 @@ importers:
       vite:
         specifier: ^6.0.3
         version: 6.4.3(@types/node@25.9.5)(jiti@2.7.0)(lightningcss@1.32.0)
+      vitest:
+        specifier: ^2.1.8
+        version: 2.1.9(@types/node@25.9.5)(lightningcss@1.32.0)
+
+  packages/core:
+    dependencies:
+      decimal.js:
+        specifier: ^10.4.3
+        version: 10.6.0
+      smol-toml:
+        specifier: ^1.6.1
+        version: 1.7.0
+    devDependencies:
+      '@types/node':
+        specifier: ^25.9.3
+        version: 25.9.5
+      fast-check:
+        specifier: ^3.23.1
+        version: 3.23.2
+      typescript:
+        specifier: ^5.7.2
+        version: 5.9.3
       vitest:
         specifier: ^2.1.8
         version: 2.1.9(@types/node@25.9.5)(lightningcss@1.32.0)

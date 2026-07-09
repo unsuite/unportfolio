@@ -1,4 +1,3 @@
-import { describe, expect, it } from "vitest";
 import {
   applyMigrations,
   DATA_FORMAT,
@@ -7,7 +6,8 @@ import {
   formatStatus,
   type Migration,
   runMigrations,
-} from "../src/core/config/format";
+} from "@unportfolio/core/config/format";
+import { describe, expect, it } from "vitest";
 
 describe("dataVersionLabel", () => {
   it("mostra la revisione intera come N.0", () => {

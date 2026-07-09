@@ -1,10 +1,10 @@
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
+import { book, holdingKey } from "@unportfolio/core/beancount/booking";
+import { directaImporter } from "@unportfolio/core/import/directa";
+import { mapMovimenti, provisionalInstrument } from "@unportfolio/core/import/mapping";
+import type { InstrumentInfo } from "@unportfolio/core/model/movimento";
 import { describe, expect, it } from "vitest";
-import { book, holdingKey } from "../src/core/beancount/booking";
-import { directaImporter } from "../src/core/import/directa";
-import { mapMovimenti, provisionalInstrument } from "../src/core/import/mapping";
-import type { InstrumentInfo } from "../src/core/model/movimento";
 
 // CSV dummy con dati fittizi, committato in repo (vedi eccezione in .gitignore):
 // esercita banner da saltare, date gg-mm-aaaa, numeri italiani, cedola, bond

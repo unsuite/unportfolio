@@ -1,5 +1,5 @@
+import { DATA_FORMAT_MIN, dataVersionLabel } from "@unportfolio/core/config/format";
 import { useEffect, useState } from "react";
-import { DATA_FORMAT_MIN, dataVersionLabel } from "../core/config/format";
 import {
   opfsStore,
   pickDirectory,

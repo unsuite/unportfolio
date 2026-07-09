@@ -1,5 +1,5 @@
+import { serializeConfig } from "@unportfolio/core/config/codecs";
 import { useState } from "react";
-import { serializeConfig } from "../../core/config/codecs";
 import { fmtNum, useApp, useDerived } from "../store/selectors";
 import { writeFile } from "../store/store";
 

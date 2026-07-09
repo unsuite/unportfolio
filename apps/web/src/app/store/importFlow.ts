@@ -1,14 +1,14 @@
-import type { Directive, TransactionDirective } from "../../core/beancount/ast";
-import { readCommodityInfo } from "../../core/derive/assets";
-import { directaImporter } from "../../core/import/directa";
+import type { Directive, TransactionDirective } from "@unportfolio/core/beancount/ast";
+import { readCommodityInfo } from "@unportfolio/core/derive/assets";
+import { directaImporter } from "@unportfolio/core/import/directa";
 import {
   buildAccountsDirectives,
   existingImportIds,
   mapMovimenti,
   provisionalInstrument,
-} from "../../core/import/mapping";
-import type { ImporterPlugin, ImportFile } from "../../core/import/types";
-import type { InstrumentInfo } from "../../core/model/movimento";
+} from "@unportfolio/core/import/mapping";
+import type { ImporterPlugin, ImportFile } from "@unportfolio/core/import/types";
+import type { InstrumentInfo } from "@unportfolio/core/model/movimento";
 import {
   allDirectives,
   appendToLedger,

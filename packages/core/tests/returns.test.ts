@@ -1,10 +1,10 @@
+import type { TransactionDirective } from "@unportfolio/core/beancount/ast";
+import { parse } from "@unportfolio/core/beancount/parser";
+import { buildPriceTable } from "@unportfolio/core/derive/prices";
+import { deriveReturns } from "@unportfolio/core/derive/returns";
+import { type TrDay, trIndex } from "@unportfolio/core/math/returns";
 import { Decimal } from "decimal.js";
 import { describe, expect, it } from "vitest";
-import type { TransactionDirective } from "../src/core/beancount/ast";
-import { parse } from "../src/core/beancount/parser";
-import { buildPriceTable } from "../src/core/derive/prices";
-import { deriveReturns } from "../src/core/derive/returns";
-import { type TrDay, trIndex } from "../src/core/math/returns";
 
 const D = (n: number) => new Decimal(n);
 const day = (date: string, value: number, flow = 0, income = 0): TrDay => ({

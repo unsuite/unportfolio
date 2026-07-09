@@ -39,7 +39,7 @@
   },
   "overrides": [
     {
-      "includes": ["apps/web/src/core/**"],
+      "includes": ["packages/core/**"],
       "linter": {
         "rules": {
           "style": {
@@ -48,8 +48,8 @@
               "options": {
                 "patterns": [
                   {
-                    "group": ["**/app", "**/app/**"],
-                    "message": "src/core deve restare puro: niente import da src/app (UI/DOM/store)."
+                    "group": ["@unportfolio/web", "@unportfolio/web/**", "**/app", "**/app/**"],
+                    "message": "@unportfolio/core deve restare puro: niente import da apps/web (UI/DOM/store)."
                   }
                 ]
               }

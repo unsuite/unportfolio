@@ -1,14 +1,14 @@
-import { useMemo, useSyncExternalStore } from "react";
-import type { TransactionDirective } from "../../core/beancount/ast";
-import { type BookingResult, book } from "../../core/beancount/booking";
+import type { TransactionDirective } from "@unportfolio/core/beancount/ast";
+import { type BookingResult, book } from "@unportfolio/core/beancount/booking";
 import {
   type AssetRow,
   type CommodityInfo,
   deriveAssets,
   readCommodityInfo,
-} from "../../core/derive/assets";
-import { derivePatrimonio, type PatrimonioStatement } from "../../core/derive/patrimonio";
-import { buildPriceTable, type PriceTable } from "../../core/derive/prices";
+} from "@unportfolio/core/derive/assets";
+import { derivePatrimonio, type PatrimonioStatement } from "@unportfolio/core/derive/patrimonio";
+import { buildPriceTable, type PriceTable } from "@unportfolio/core/derive/prices";
+import { useMemo, useSyncExternalStore } from "react";
 import { type AppState, allDirectives, getState, subscribe } from "./store";
 
 export function useApp(): AppState {

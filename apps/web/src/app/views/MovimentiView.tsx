@@ -1,7 +1,7 @@
+import { depositoSegmentOf } from "@unportfolio/core/beancount/booking";
+import { deriveBolloTitoli } from "@unportfolio/core/derive/bollo";
+import type { ImportFile } from "@unportfolio/core/import/types";
 import { useState } from "react";
-import { depositoSegmentOf } from "../../core/beancount/booking";
-import { deriveBolloTitoli } from "../../core/derive/bollo";
-import type { ImportFile } from "../../core/import/types";
 import { applyImport, type ImportPreview, previewImport } from "../store/importFlow";
 import { fmtEur, useApp, useDerived } from "../store/selectors";
 import { notify, renameDeposito } from "../store/store";

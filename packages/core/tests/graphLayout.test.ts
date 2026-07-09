@@ -1,6 +1,6 @@
+import { hasCycle } from "@unportfolio/core/derive/goalStatus";
+import { autoLayout, layoutBounds, NODE_W } from "@unportfolio/core/derive/graphLayout";
 import { describe, expect, it } from "vitest";
-import { hasCycle } from "../src/core/derive/goalStatus";
-import { autoLayout, layoutBounds, NODE_W } from "../src/core/derive/graphLayout";
 
 describe("autoLayout (verticale, piramide)", () => {
   it("sorgenti in basso, il flusso sale: y decresce con la profondità", () => {

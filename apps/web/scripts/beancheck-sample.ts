@@ -1,8 +1,9 @@
 // Genera un ledger di esempio col serializer e lo scrive su stdout,
 // per validarlo con bean-check (vedi npm run / docs).
+
+import type { Directive } from "@unportfolio/core/beancount/ast";
+import { formatDirective } from "@unportfolio/core/beancount/serializer";
 import { Decimal } from "decimal.js";
-import type { Directive } from "../src/core/beancount/ast";
-import { formatDirective } from "../src/core/beancount/serializer";
 
 const D = (n: string | number) => new Decimal(n);
 
