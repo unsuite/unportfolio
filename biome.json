@@ -1,44 +1,20 @@
 {
   "$schema": "./node_modules/@biomejs/biome/configuration_schema.json",
+  "extends": ["@unportfolio/biome-config/biome.json"],
   "vcs": { "enabled": false },
   "files": {
     "includes": [
-      "**",
-      "!dist",
-      "!node_modules",
-      "!public",
+      "!**/dist",
+      "!**/node_modules",
+      "!**/public",
+      "!**/build",
       "!**/*.tsbuildinfo",
-      "!package-lock.json"
+      "!pnpm-lock.yaml"
     ]
-  },
-  "formatter": {
-    "enabled": true,
-    "indentStyle": "space",
-    "indentWidth": 2,
-    "lineWidth": 100
-  },
-  "javascript": {
-    "formatter": { "quoteStyle": "double" }
-  },
-  "linter": {
-    "enabled": true,
-    "rules": {
-      "preset": "recommended",
-      "a11y": { "recommended": false },
-      "style": {
-        "noNonNullAssertion": "off"
-      },
-      "correctness": {
-        "useExhaustiveDependencies": "warn"
-      },
-      "suspicious": {
-        "noArrayIndexKey": "warn"
-      }
-    }
   },
   "overrides": [
     {
-      "includes": ["src/core/**"],
+      "includes": ["packages/core/**"],
       "linter": {
         "rules": {
           "style": {
@@ -47,8 +23,8 @@
               "options": {
                 "patterns": [
                   {
-                    "group": ["**/app", "**/app/**"],
-                    "message": "src/core deve restare puro: niente import da src/app (UI/DOM/store)."
+                    "group": ["@unportfolio/web", "@unportfolio/web/**", "**/app", "**/app/**"],
+                    "message": "@unportfolio/core deve restare puro: niente import da apps/web (UI/DOM/store). Vedi ADR-0002."
                   }
                 ]
               }
@@ -56,6 +32,13 @@
           }
         }
       }
+    },
+    {
+      "includes": ["**/*.e2e.ts", "**/e2e/**/*.ts"],
+      "plugins": [
+        "./node_modules/@unportfolio/biome-config/no-react-internals.grit",
+        "./node_modules/@unportfolio/biome-config/no-implicit-e2e-sync.grit"
+      ]
     }
   ]
 }

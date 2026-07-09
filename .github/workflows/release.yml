@@ -19,11 +19,11 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      - name: Verifica che il tag combaci con package.json
+      - name: Verifica che il tag combaci con apps/web/package.json
         run: |
-          PKG="v$(node -p "require('./package.json').version")"
+          PKG="v$(node -p "require('./apps/web/package.json').version")"
           if [ "$PKG" != "${{ github.ref_name }}" ]; then
-            echo "::error::tag ${{ github.ref_name }} ≠ package.json $PKG — allinea la version prima di taggare" >&2
+            echo "::error::tag ${{ github.ref_name }} ≠ apps/web/package.json $PKG — allinea la version prima di taggare" >&2
             exit 1
           fi
       - name: Crea la GitHub Release

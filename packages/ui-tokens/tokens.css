@@ -1,0 +1,63 @@
+/**
+ * Design token seed di unportfolio (ADR-0006).
+ * Custom properties CSS come unica fonte di verità dei token, annotate per
+ * l'addon storybook-design-token così da renderle in Foundations.
+ * Riempi/estendi questi gruppi man mano che il design system cresce.
+ */
+:root {
+  /**
+   * @tokens Colors
+   * @presenter Color
+   */
+  --color-bg: #ffffff;
+  --color-surface: #f6f7f9;
+  --color-text: #1a1d21;
+  --color-text-muted: #5b6470;
+  --color-border: #e2e5ea;
+  --color-accent: #2f6feb;
+  --color-positive: #1f9d63;
+  --color-negative: #d1435b;
+  --color-warning: #c9820a;
+  /**
+   * @tokens-end
+   */
+
+  /**
+   * @tokens Spacing
+   * @presenter Spacing
+   */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-6: 24px;
+  --space-8: 32px;
+  /**
+   * @tokens-end
+   */
+
+  /**
+   * @tokens Radii
+   * @presenter BorderRadius
+   */
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 14px;
+  --radius-full: 9999px;
+  /**
+   * @tokens-end
+   */
+
+  /**
+   * @tokens Typography
+   * @presenter FontSize
+   */
+  --font-size-xs: 12px;
+  --font-size-sm: 14px;
+  --font-size-md: 16px;
+  --font-size-lg: 20px;
+  --font-size-xl: 28px;
+  /**
+   * @tokens-end
+   */
+}

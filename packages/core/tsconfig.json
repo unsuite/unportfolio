@@ -1,0 +1,11 @@
+{
+  "extends": "@unportfolio/typescript-config/base.json",
+  "compilerOptions": {
+    "lib": ["ES2022"],
+    "types": ["node"],
+    "paths": {
+      "@unportfolio/core/*": ["./src/*.ts"]
+    }
+  },
+  "include": ["src", "tests"]
+}

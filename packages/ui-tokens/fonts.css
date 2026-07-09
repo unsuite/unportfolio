@@ -1,0 +1,11 @@
+/**
+ * Font stack di sistema (ADR-0006): nessun font remoto, coerente con l'app
+ * local-first/offline. Definisce le famiglie come token riusabili.
+ */
+:root {
+  --font-sans:
+    system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji",
+    "Segoe UI Emoji";
+  --font-mono:
+    ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
+}

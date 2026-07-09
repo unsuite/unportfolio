@@ -1,0 +1,10 @@
+{
+  "name": "@unportfolio/biome-config",
+  "version": "0.0.0",
+  "private": true,
+  "exports": {
+    "./biome.json": "./biome.json",
+    "./no-react-internals.grit": "./no-react-internals.grit",
+    "./no-implicit-e2e-sync.grit": "./no-implicit-e2e-sync.grit"
+  }
+}

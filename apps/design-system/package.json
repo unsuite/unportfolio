@@ -1,0 +1,31 @@
+{
+  "name": "@unportfolio/design-system",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "storybook dev -p 6006 --no-open --disable-telemetry",
+    "build": "storybook build -o build --disable-telemetry",
+    "typecheck": "tsc --noEmit",
+    "lint": "biome check .",
+    "lint:fix": "biome check . --write"
+  },
+  "dependencies": {
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
+  },
+  "devDependencies": {
+    "@unportfolio/typescript-config": "workspace:*",
+    "@unportfolio/ui-tokens": "workspace:*",
+    "@types/node": "^25.9.3",
+    "@storybook/addon-a11y": "^10.4.6",
+    "@storybook/addon-docs": "^10.4.6",
+    "@storybook/react-vite": "^10.4.6",
+    "@types/react": "^18.3.12",
+    "@types/react-dom": "^18.3.1",
+    "storybook": "^10.4.6",
+    "storybook-design-token": "^5.0.0",
+    "typescript": "^5.7.2",
+    "vite": "^6.0.3"
+  }
+}

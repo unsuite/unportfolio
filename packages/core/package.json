@@ -1,0 +1,30 @@
+{
+  "name": "@unportfolio/core",
+  "private": true,
+  "version": "0.1.2",
+  "type": "module",
+  "exports": {
+    "./*": "./src/*.ts"
+  },
+  "scripts": {
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "lint": "biome check .",
+    "lint:fix": "biome check --write .",
+    "format": "biome format --write .",
+    "typecheck": "tsc -b"
+  },
+  "dependencies": {
+    "decimal.js": "^10.4.3",
+    "smol-toml": "^1.6.1"
+  },
+  "devDependencies": {
+    "@unportfolio/test-utils": "workspace:*",
+    "@unportfolio/typescript-config": "workspace:*",
+    "@types/node": "^25.9.3",
+    "fast-check": "^3.23.1",
+    "glob": "^11.0.0",
+    "typescript": "^5.7.2",
+    "vitest": "^2.1.8"
+  }
+}
