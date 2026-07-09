@@ -1,5 +1,7 @@
 node_modules
 dist
+build
+.turbo
 .DS_Store
 tsconfig.tsbuildinfo
 
@@ -8,9 +10,9 @@ tsconfig.tsbuildinfo
 *.csv
 *.pdf
 # eccezione: fixture di test con dati fittizi
-!tests/fixtures/*.csv
+!**/tests/fixtures/*.csv
 
-public/bin/
+**/public/bin/
 
 # override locale del SITE_URL (default hardcoded in vite.config.ts)
 .env

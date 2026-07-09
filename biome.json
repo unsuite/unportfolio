@@ -4,11 +4,12 @@
   "files": {
     "includes": [
       "**",
-      "!dist",
-      "!node_modules",
-      "!public",
+      "!**/dist",
+      "!**/node_modules",
+      "!**/public",
+      "!**/build",
       "!**/*.tsbuildinfo",
-      "!package-lock.json"
+      "!pnpm-lock.yaml"
     ]
   },
   "formatter": {
@@ -38,7 +39,7 @@
   },
   "overrides": [
     {
-      "includes": ["src/core/**"],
+      "includes": ["apps/web/src/core/**"],
       "linter": {
         "rules": {
           "style": {
