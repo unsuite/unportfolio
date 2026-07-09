@@ -1,4 +1,4 @@
-import { DATA_FORMAT_MIN, dataVersionLabel } from "@unportfolio/core/config/format";
+import { RouterProvider } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import {
   opfsStore,
@@ -9,30 +9,10 @@ import {
   restoreDirectory,
 } from "./fs/fileSystem";
 import { useInstallPrompt } from "./pwa/install";
+import { router } from "./router";
 import { useApp } from "./store/selectors";
-import { dismissNotices, migrateStore, openStore, refreshFromDisk } from "./store/store";
+import { openStore, refreshFromDisk } from "./store/store";
 import { VersionFooter } from "./VersionFooter";
-import { GoalsView } from "./views/GoalsView";
-import { GuidaView } from "./views/GuidaView";
-import { MovimentiView } from "./views/MovimentiView";
-import { PatrimonioView } from "./views/PatrimonioView";
-import { PensioneView } from "./views/PensioneView";
-import { PricesView } from "./views/PricesView";
-import { RibilanciamentoView } from "./views/RibilanciamentoView";
-import { SettingsView } from "./views/SettingsView";
-
-const TABS = [
-  ["patrimonio", "Patrimonio"],
-  ["goals", "Goals"],
-  ["pensione", "Pensione"],
-  ["ribilanciamento", "Ribilancia"],
-  ["movimenti", "Movimenti"],
-  ["prezzi", "Prezzi"],
-  ["impostazioni", "Impostazioni"],
-  ["guida", "Guida"],
-] as const;
-
-type Tab = (typeof TABS)[number][0];
 
 /** Rileva se l'utente è probabilmente su Windows, per suggerire il comando giusto. */
 function isWindows(): boolean {
@@ -43,8 +23,6 @@ function isWindows(): boolean {
 
 export function App() {
   const s = useApp();
-  const { canInstall, promptInstall } = useInstallPrompt();
-  const [tab, setTab] = useState<Tab>("patrimonio");
   const [restore, setRestore] = useState<RestoreResult>();
 
   useEffect(() => {
@@ -74,76 +52,8 @@ export function App() {
     );
   }
 
-  return (
-    <div className="min-h-screen bg-zinc-950 text-zinc-100">
-      <header className="sticky top-0 z-30 border-b border-zinc-800 bg-zinc-900/90 px-6 py-3 backdrop-blur">
-        <div className="flex items-center gap-6">
-          <h1 className="text-lg font-bold tracking-tight">unportfolio</h1>
-          <nav className="flex gap-1">
-            {TABS.map(([id, label]) => (
-              <button
-                key={id}
-                onClick={() => setTab(id)}
-                className={`rounded px-3 py-1 text-sm ${
-                  tab === id
-                    ? "bg-zinc-700 text-white"
-                    : "text-zinc-400 hover:bg-zinc-800 hover:text-zinc-200"
-                }`}
-              >
-                {label}
-              </button>
-            ))}
-          </nav>
-          {canInstall ? (
-            <button
-              onClick={promptInstall}
-              title="Installa l'app: il browser ricorderà il permesso sulla cartella tra i riavvii"
-              className="ml-auto rounded bg-sky-700 px-3 py-1 text-sm font-medium hover:bg-sky-600"
-            >
-              Installa l'app
-            </button>
-          ) : null}
-        </div>
-      </header>
-      {s.formatBlocked && (
-        <div className="flex flex-wrap items-center gap-3 border-b border-red-900 bg-red-950 px-6 py-3 text-sm text-red-300">
-          <span>
-            Versione dati cartella {dataVersionLabel(s.dataFormat)} non più supportata (minimo{" "}
-            {dataVersionLabel(DATA_FORMAT_MIN)}). Le modifiche sono disabilitate finché non aggiorni
-            la cartella.
-          </span>
-          <button
-            onClick={() => void migrateStore()}
-            disabled={s.busy}
-            className="rounded bg-red-800 px-3 py-1 font-medium text-red-50 hover:bg-red-700 disabled:opacity-50"
-          >
-            Correggi automaticamente
-          </button>
-        </div>
-      )}
-      {s.notices.length > 0 && (
-        <div
-          className="cursor-pointer border-b border-sky-900 bg-sky-950 px-6 py-2 text-sm text-sky-300"
-          onClick={dismissNotices}
-        >
-          {s.notices.map((n, i) => (
-            <div key={i}>{n}</div>
-          ))}
-        </div>
-      )}
-      <main className="px-6 py-6">
-        {tab === "patrimonio" && <PatrimonioView />}
-        {tab === "goals" && <GoalsView />}
-        {tab === "pensione" && <PensioneView />}
-        {tab === "ribilanciamento" && <RibilanciamentoView />}
-        {tab === "movimenti" && <MovimentiView />}
-        {tab === "prezzi" && <PricesView />}
-        {tab === "impostazioni" && <SettingsView />}
-        {tab === "guida" && <GuidaView />}
-      </main>
-      <VersionFooter />
-    </div>
-  );
+  // Store pronto: il guscio + le route (TanStack Router) prendono il controllo.
+  return <RouterProvider router={router} />;
 }
 
 function Onboarding({ restore }: { restore: RestoreResult | undefined }) {

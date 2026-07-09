@@ -17,6 +17,7 @@
   },
   "dependencies": {
     "@unportfolio/core": "workspace:*",
+    "@tanstack/react-router": "^1.95.0",
     "@tanstack/react-table": "^8.21.3",
     "decimal.js": "^10.4.3",
     "lucide-react": "^1.18.0",
