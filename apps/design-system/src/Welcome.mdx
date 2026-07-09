@@ -10,13 +10,17 @@ e [ADR-0007 (Product & reference)](../../../docs/adr/0007-product-and-reference-
 
 ## Com'è organizzato
 
-- **Foundations** — i design token (colori, spazi, tipografia) generati dalle
-  custom properties CSS di `@unportfolio/ui-tokens`.
+- **Foundations** — i design token (colori, palette chart, spazi, tipografia)
+  generati dalle custom properties CSS di `@unportfolio/ui-tokens`.
+- **Components** — il catalogo delle primitive presentazionali di
+  `@unportfolio/ui` (`packages/ui`), stilate con CSS Modules sui token (ADR-0006).
+  Ogni componente è puro (dati via props, nessun core/store/router/fs) e ha una
+  storia per variante reale. Le viste di `apps/web` non sono ancora ricablate su
+  questi componenti: il catalogo serve a ragionare su ciascuna primitiva in
+  isolamento.
 - **Product** — ogni decisione di prodotto (PDR in `docs/product/decisions/`)
   viene renderizzata qui come pagina: si "battezza" il documento dandogli una
   vetrina condivisa dove gli stakeholder rivedono legacy → prototipo → scelta.
-- **Components** — quando `apps/web` avrà storie co-locate (`*.stories.tsx`)
-  compariranno qui in automatico.
 
 ## Aggiungere una decisione
 

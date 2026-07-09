@@ -16,6 +16,7 @@
   },
   "devDependencies": {
     "@unportfolio/typescript-config": "workspace:*",
+    "@unportfolio/ui": "workspace:*",
     "@unportfolio/ui-tokens": "workspace:*",
     "@types/node": "^25.9.3",
     "@storybook/addon-a11y": "^10.4.6",
