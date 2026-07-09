@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { APP_SHA, checkLatest, commitUrl, type UpdateCheck } from "./version";
+import { APP_SHA, APP_VERSION, checkLatest, releaseUrl, type UpdateCheck } from "./version";
 
 /**
  * Footer sempre visibile (onboarding incluso) con la build in esecuzione e un
@@ -15,21 +15,19 @@ export function VersionFooter() {
 
   return (
     <footer className="fixed right-2 bottom-2 z-40 flex items-center gap-2 rounded border border-zinc-800 bg-zinc-900/90 px-2 py-1 font-mono text-[11px] text-zinc-500 backdrop-blur">
-      <span>
-        v{" "}
-        {APP_SHA === "dev" ? (
-          "dev"
-        ) : (
-          <a
-            href={commitUrl(APP_SHA)}
-            target="_blank"
-            rel="noreferrer"
-            className="text-zinc-400 hover:underline"
-          >
-            {APP_SHA}
-          </a>
-        )}
-      </span>
+      {APP_VERSION === "dev" ? (
+        <span>dev</span>
+      ) : (
+        <a
+          href={releaseUrl(APP_VERSION)}
+          target="_blank"
+          rel="noreferrer"
+          title={APP_SHA === "dev" ? undefined : `commit ${APP_SHA}`}
+          className="text-zinc-400 hover:underline"
+        >
+          v{APP_VERSION}
+        </a>
+      )}
       {update?.status === "current" && <span className="text-emerald-500">✓ aggiornato</span>}
       {update?.status === "stale" && (
         <button
