@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { DATA_FORMAT, formatStatus } from "../../core/config/format";
+import { formatStatus } from "../../core/config/format";
 import { pickDirectory } from "../fs/fileSystem";
 import { useApp } from "../store/selectors";
 import { logout, migrateStore, openStore } from "../store/store";
@@ -47,19 +47,9 @@ export function SettingsView() {
     }
   }
 
+  // la revisione «supportata dall'app» resta interna (DATA_FORMAT): non la
+  // mostriamo, segnaliamo solo quando la revisione della cartella non è gestibile
   const status = formatStatus(s.dataFormat);
-  const statusText: Record<typeof status, string> = {
-    ok: "aggiornato",
-    consigliato: "aggiornamento consigliato",
-    richiesto: "aggiornamento richiesto",
-    "app-vecchia": "l'app è più vecchia dei dati",
-  };
-  const statusColor: Record<typeof status, string> = {
-    ok: "text-emerald-400",
-    consigliato: "text-amber-400",
-    richiesto: "text-red-400",
-    "app-vecchia": "text-amber-400",
-  };
 
   async function checkUpdate() {
     if (checking) return;
@@ -114,9 +104,18 @@ export function SettingsView() {
         <h2 className="mb-2 text-lg font-semibold">Formato dati</h2>
         <div className="flex flex-wrap items-center gap-3">
           <span className="rounded bg-zinc-800 px-3 py-1.5 font-mono text-xs">
-            revisione formato: cartella {s.dataFormat} · app {DATA_FORMAT}
+            revisione formato dati: {s.dataFormat}
           </span>
-          <span className={`text-xs ${statusColor[status]}`}>{statusText[status]}</span>
+          {status === "richiesto" && (
+            <span className="text-xs text-red-400">
+              non supportata da questa app — aggiorna la cartella
+            </span>
+          )}
+          {status === "app-vecchia" && (
+            <span className="text-xs text-amber-400">
+              più recente di questa app — aggiorna l'app
+            </span>
+          )}
           {/* sempre disponibile per ri-sincronizzare i file gestiti; nascosto solo
               se è l'app a essere indietro (ri-migrare declasserebbe il marcatore) */}
           {status !== "app-vecchia" && (
