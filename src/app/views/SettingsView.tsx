@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { formatStatus } from "../../core/config/format";
+import { dataVersionLabel, formatStatus } from "../../core/config/format";
 import { pickDirectory } from "../fs/fileSystem";
 import { useApp } from "../store/selectors";
 import { logout, migrateStore, openStore } from "../store/store";
@@ -104,7 +104,7 @@ export function SettingsView() {
         <h2 className="mb-2 text-lg font-semibold">Formato dati</h2>
         <div className="flex flex-wrap items-center gap-3">
           <span className="rounded bg-zinc-800 px-3 py-1.5 font-mono text-xs">
-            revisione formato dati: {s.dataFormat}
+            Versione Dati Cartella: {dataVersionLabel(s.dataFormat)}
           </span>
           {status === "richiesto" && (
             <span className="text-xs text-red-400">

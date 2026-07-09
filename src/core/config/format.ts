@@ -30,6 +30,12 @@ export type FormatStatus =
   | "richiesto" // v < MIN: scritture bloccate finché non si migra
   | "app-vecchia"; // v > DATA_FORMAT: è l'app a essere indietro
 
+/** Resa leggibile della revisione (intera) come versione `N.0`. Il contatore
+ *  resta intero per le migrazioni; qui è solo l'etichetta mostrata all'utente. */
+export function dataVersionLabel(rev: number): string {
+  return `${rev}.0`;
+}
+
 export function formatStatus(version: number): FormatStatus {
   if (version > DATA_FORMAT) return "app-vecchia";
   if (version === DATA_FORMAT) return "ok";

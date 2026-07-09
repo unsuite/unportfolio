@@ -3,10 +3,19 @@ import {
   applyMigrations,
   DATA_FORMAT,
   DATA_FORMAT_MIN,
+  dataVersionLabel,
   formatStatus,
   type Migration,
   runMigrations,
 } from "../src/core/config/format";
+
+describe("dataVersionLabel", () => {
+  it("mostra la revisione intera come N.0", () => {
+    expect(dataVersionLabel(1)).toBe("1.0");
+    expect(dataVersionLabel(0)).toBe("0.0");
+    expect(dataVersionLabel(2)).toBe("2.0");
+  });
+});
 
 describe("formatStatus", () => {
   it("pari alla versione corrente = ok", () => {

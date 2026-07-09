@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { DATA_FORMAT, DATA_FORMAT_MIN } from "../core/config/format";
+import { DATA_FORMAT_MIN, dataVersionLabel } from "../core/config/format";
 import {
   opfsStore,
   pickDirectory,
@@ -108,8 +108,9 @@ export function App() {
       {s.formatBlocked && (
         <div className="flex flex-wrap items-center gap-3 border-b border-red-900 bg-red-950 px-6 py-3 text-sm text-red-300">
           <span>
-            Revisione formato dati {s.dataFormat} non più supportata (minimo {DATA_FORMAT_MIN},
-            corrente {DATA_FORMAT}). Le modifiche sono disabilitate finché non aggiorni la cartella.
+            Versione dati cartella {dataVersionLabel(s.dataFormat)} non più supportata (minimo{" "}
+            {dataVersionLabel(DATA_FORMAT_MIN)}). Le modifiche sono disabilitate finché non aggiorni
+            la cartella.
           </span>
           <button
             onClick={() => void migrateStore()}
