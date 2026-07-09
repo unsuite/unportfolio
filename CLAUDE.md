@@ -84,8 +84,9 @@ pnpm turbo run lint typecheck test build   # = pnpm ci
 ## Reviews
 
 Ogni code review e PR review DEVE anche eseguire le skill `adr-check`,
-`story-check` e `product-check` e integrarne i findings. Tutte solo-report (non
-modificano file). Eseguile in testa, prima del passaggio riga per riga:
+`story-check`, `product-check` e `design-check` e integrarne i findings. Tutte
+solo-report (non modificano file). Eseguile in testa, prima del passaggio riga per
+riga:
 
 - `adr-check` — codice vs `docs/adr/` (e `docs/guidances/`): violazioni + decisioni
   che richiedono un nuovo/aggiornato ADR.
@@ -93,9 +94,12 @@ modificano file). Eseguile in testa, prima del passaggio riga per riga:
   `apps/design-system` (gestisce il caso "Storybook non ancora presente").
 - `product-check` — PDR in `docs/product/decisions/` vs le pagine Storybook
   `Product/*.mdx` (idem).
+- `design-check` — disciplina di design/UX: token vs valori grezzi, tema light+dark,
+  contrasto AA, focus/tastiera, motion, tooltip (scope: `packages/ui` e `ui-tokens`).
 
 Per *registrare* una decisione di prodotto/design (e la sua pagina di review), usa la
-skill `product-decision` — scrive il PDR + l'MDX che lo renderizza.
+skill `product-decision` — scrive il PDR + l'MDX che lo renderizza. Per *esplorare*
+2–3 direzioni visive come prototipi Storybook prima di scegliere, usa `design-explore`.
 
 **Consegna il feedback sulla PR.** Quando la review ha una PR GitHub, posta i
 findings come **commenti inline sulla PR** ancorati alle righe rilevanti, non solo
