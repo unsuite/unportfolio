@@ -1,5 +1,11 @@
 import { describe, expect, it } from "vitest";
-import { parseConfig, serializeConfig } from "../src/core/config/codecs";
+import {
+  parseConfig,
+  parseTargets,
+  serializeConfig,
+  serializeTargets,
+} from "../src/core/config/codecs";
+import type { RebalanceTarget } from "../src/core/model/config";
 
 describe("config [[pensione]]", () => {
   it("parsa più profili da config.toml", () => {
@@ -205,5 +211,32 @@ periodicita = "semestrale"
     ];
     const round = parseConfig(serializeConfig(cfg));
     expect(round.depositi).toEqual(cfg.depositi);
+  });
+});
+
+describe("targets.toml", () => {
+  it("round-trip preserva peso e flag fisso/escluso", () => {
+    const targets: RebalanceTarget[] = [
+      { portfolio: "P", commodity: "A", peso: 0.5 },
+      { portfolio: "P", commodity: "B", peso: 0.5, fisso: true },
+      { portfolio: "P", commodity: "C", peso: 0, escluso: true },
+    ];
+    expect(parseTargets(serializeTargets(targets))).toEqual(targets);
+  });
+
+  it("tiene una riga con solo flag (peso 0) e scarta quelle vuote", () => {
+    const text = `
+[[target]]
+portfolio = "P"
+commodity = "A"
+peso = 0.0
+fisso = true
+
+[[target]]
+portfolio = "P"
+commodity = "B"
+peso = 0.0
+`;
+    expect(parseTargets(text)).toEqual([{ portfolio: "P", commodity: "A", peso: 0, fisso: true }]);
   });
 });

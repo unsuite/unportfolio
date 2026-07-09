@@ -90,6 +90,10 @@ export interface RebalanceTarget {
   portfolio: string;
   commodity: string;
   peso: number; // 0..1
+  /** posizione congelata: ideale = corrente, esclusa dal montante da ridistribuire */
+  fisso?: boolean;
+  /** fuori dalla matematica del ribilanciamento: nessun totale/percentuale/ideale */
+  escluso?: boolean;
 }
 
 export interface SnapshotEntry {

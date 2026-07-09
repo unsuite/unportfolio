@@ -189,9 +189,16 @@ export function parseTargets(text: string): RebalanceTarget[] {
   for (const t of doc.target ?? []) {
     const portfolio = asString(t["portfolio"]);
     const commodity = asString(t["commodity"]);
-    const peso = asNumber(t["peso"]);
-    if (portfolio && commodity && peso !== undefined && peso > 0)
-      out.push({ portfolio, commodity, peso });
+    if (!portfolio || !commodity) continue;
+    const peso = asNumber(t["peso"]) ?? 0;
+    const fisso = t["fisso"] === true;
+    const escluso = t["escluso"] === true;
+    // una riga vale la pena solo se porta un peso o almeno un modificatore
+    if (peso <= 0 && !fisso && !escluso) continue;
+    const target: RebalanceTarget = { portfolio, commodity, peso: peso > 0 ? peso : 0 };
+    if (fisso) target.fisso = true;
+    if (escluso) target.escluso = true;
+    out.push(target);
   }
   return out;
 }
@@ -199,11 +206,16 @@ export function parseTargets(text: string): RebalanceTarget[] {
 export function serializeTargets(targets: RebalanceTarget[]): string {
   return (
     stringifyToml({
-      target: targets.map((t) => ({
-        portfolio: t.portfolio,
-        commodity: t.commodity,
-        peso: t.peso,
-      })),
+      target: targets.map((t) => {
+        const o: Record<string, unknown> = {
+          portfolio: t.portfolio,
+          commodity: t.commodity,
+          peso: t.peso,
+        };
+        if (t.fisso) o["fisso"] = true;
+        if (t.escluso) o["escluso"] = true;
+        return o;
+      }),
     }) + "\n"
   );
 }
