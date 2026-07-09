@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { DATA_FORMAT, DATA_FORMAT_MIN } from "../core/config/format";
 import {
   opfsStore,
   pickDirectory,
@@ -9,7 +10,7 @@ import {
 } from "./fs/fileSystem";
 import { useInstallPrompt } from "./pwa/install";
 import { useApp } from "./store/selectors";
-import { dismissNotices, openStore, refreshFromDisk } from "./store/store";
+import { dismissNotices, migrateStore, openStore, refreshFromDisk } from "./store/store";
 import { VersionFooter } from "./VersionFooter";
 import { GoalsView } from "./views/GoalsView";
 import { GuidaView } from "./views/GuidaView";
@@ -104,6 +105,21 @@ export function App() {
           ) : null}
         </div>
       </header>
+      {s.formatBlocked && (
+        <div className="flex flex-wrap items-center gap-3 border-b border-red-900 bg-red-950 px-6 py-3 text-sm text-red-300">
+          <span>
+            Revisione formato dati {s.dataFormat} non più supportata (minimo {DATA_FORMAT_MIN},
+            corrente {DATA_FORMAT}). Le modifiche sono disabilitate finché non aggiorni la cartella.
+          </span>
+          <button
+            onClick={() => void migrateStore()}
+            disabled={s.busy}
+            className="rounded bg-red-800 px-3 py-1 font-medium text-red-50 hover:bg-red-700 disabled:opacity-50"
+          >
+            Correggi automaticamente
+          </button>
+        </div>
+      )}
       {s.notices.length > 0 && (
         <div
           className="cursor-pointer border-b border-sky-900 bg-sky-950 px-6 py-2 text-sm text-sky-300"

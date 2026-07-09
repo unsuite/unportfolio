@@ -30,6 +30,10 @@ $ErrorActionPreference = "Stop"
 # con -Site o la variabile d'ambiente SITE.
 $SiteDefault = "https://unsuite.github.io/unportfolio"
 
+# versione del formato dati (allineata a src/core/config/format.ts DATA_FORMAT):
+# annotata in config.toml come formato_dati, così l'app sa se serve un update.
+$DataFormat = 1
+
 # --- CLI prezzi: binario self-contained (nessun runtime richiesto) ---
 function Install-PricesBin {
   if (-not $Site) { return }
@@ -88,6 +92,14 @@ function Put($rel, $content) {
   }
 }
 
+# file "gestito": contenuto generato (non dato utente), riscritto sempre così un
+# re-run allinea la versione. Vedi src/app/fs/fileSystem.ts managedFiles.
+function PutManaged($rel, $content) {
+  $path = Join-Path $Dir $rel
+  [System.IO.File]::WriteAllText($path, ($content -replace "`r`n", "`n"), $utf8NoBom)
+  Write-Host "aggiornato $rel"
+}
+
 Put "ledger\main.beancount" @'
 option "title" "unportfolio"
 option "operating_currency" "EUR"
@@ -116,8 +128,8 @@ date,account_id,value,currency
 '@
 
 # AGENTS.md: onboarding per un LLM che apre la cartella (duplicato in
-# src/app/fs/fileSystem.ts AGENTS_MD e public/init.sh).
-Put "AGENTS.md" @'
+# src/app/fs/fileSystem.ts AGENTS_MD e public/init.sh). File gestito: sempre riscritto.
+PutManaged "AGENTS.md" @'
 # unportfolio — cartella dati
 
 Questa cartella è il database di **unportfolio**, un'app locale per net worth,
@@ -194,14 +206,24 @@ $absDir = (Resolve-Path -LiteralPath $Dir).Path
 $tomlPath = $absDir -replace "\\", "\\"
 $configPath = Join-Path $Dir "config.toml"
 if (-not (Test-Path -LiteralPath $configPath)) {
-  $config = "percorso_dati = `"$tomlPath`"`noperating_currency = `"EUR`"`ndefault_broker = `"Directa`"`npriorita = []`n`n[prezzi]`nanni = 2`nintervallo = `"1wk`"`n"
+  $config = "formato_dati = $DataFormat`npercorso_dati = `"$tomlPath`"`noperating_currency = `"EUR`"`ndefault_broker = `"Directa`"`npriorita = []`n`n[prezzi]`nanni = 2`nintervallo = `"1wk`"`n"
   [System.IO.File]::WriteAllText($configPath, $config, $utf8NoBom)
-  Write-Host "creato config.toml (percorso annotato: $absDir)"
-} elseif (-not (Select-String -Path $configPath -Pattern '^percorso_dati' -Quiet)) {
-  # prepend: una chiave top-level in coda finirebbe dentro [prezzi]
+  Write-Host "creato config.toml (formato v$DataFormat, percorso: $absDir)"
+} else {
+  # marcatore di formato: aggiorna se c'è, altrimenti prepend (una chiave
+  # top-level in coda finirebbe dentro [prezzi])
   $existing = [System.IO.File]::ReadAllText($configPath)
-  [System.IO.File]::WriteAllText($configPath, "percorso_dati = `"$tomlPath`"`n$existing", $utf8NoBom)
-  Write-Host "annotato percorso in config.toml: $absDir"
+  if ($existing -match '(?m)^formato_dati') {
+    $existing = $existing -replace '(?m)^formato_dati.*$', "formato_dati = $DataFormat"
+  } else {
+    $existing = "formato_dati = $DataFormat`n$existing"
+  }
+  if ($existing -notmatch '(?m)^percorso_dati') {
+    $existing = "percorso_dati = `"$tomlPath`"`n$existing"
+    Write-Host "annotato percorso in config.toml: $absDir"
+  }
+  [System.IO.File]::WriteAllText($configPath, $existing, $utf8NoBom)
+  Write-Host "config.toml al formato v$DataFormat"
 }
 
 Write-Host ""

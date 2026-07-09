@@ -18,6 +18,9 @@ function gitSha(): string {
 
 const BUILD_SHA = gitSha();
 const BUILD_TIME = new Date().toISOString();
+/** Versione di release (SemVer) da package.json: l'asse "0.1.0" mostrato in UI,
+ *  distinto dallo sha del bundle e dalla revisione del formato dati. */
+const APP_VERSION = JSON.parse(readFileSync(resolve("package.json"), "utf8")).version as string;
 
 /** Script di setup serviti dal sito su cui iniettare il SITE_URL canonico. */
 const SETUP_SCRIPTS = ["init.sh", "init.ps1"] as const;
@@ -64,7 +67,7 @@ function versionManifest(): Plugin {
       this.emitFile({
         type: "asset",
         fileName: "version.json",
-        source: JSON.stringify({ sha: BUILD_SHA, time: BUILD_TIME }),
+        source: JSON.stringify({ sha: BUILD_SHA, time: BUILD_TIME, version: APP_VERSION }),
       });
     },
   };
@@ -85,6 +88,7 @@ export default defineConfig(({ command, mode }) => ({
   define: {
     __APP_SHA__: JSON.stringify(BUILD_SHA),
     __APP_BUILD_TIME__: JSON.stringify(BUILD_TIME),
+    __APP_VERSION__: JSON.stringify(APP_VERSION),
   },
   // prova la 5173 e, se occupata, prende la prima porta libera successiva
   server: { port: 5173, strictPort: false },

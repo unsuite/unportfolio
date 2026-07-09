@@ -18,6 +18,10 @@ set -eu
 # esplicito o con la variabile d'ambiente SITE.
 SITE_DEFAULT="https://unsuite.github.io/unportfolio"
 
+# versione del formato dati (allineata a src/core/config/format.ts DATA_FORMAT):
+# annotata in config.toml come formato_dati, così l'app sa se serve un update.
+DATA_FORMAT=1
+
 DIR="${1:-$HOME/Documents/unportfolio-data}"
 [ "$#" -gt 0 ] && shift || true
 
@@ -116,9 +120,10 @@ put snapshots.csv 'date,account_id,value,currency
 '
 
 # AGENTS.md: onboarding per un LLM che apre la cartella (duplicato in
-# src/app/fs/fileSystem.ts AGENTS_MD). Heredoc quotato: nessuna interpolazione.
-if [ ! -f "$DIR/AGENTS.md" ]; then
-  cat > "$DIR/AGENTS.md" <<'AGENTS_EOF'
+# src/app/fs/fileSystem.ts AGENTS_MD). File "gestito": lo riscriviamo sempre
+# (non è dato utente), così un re-run allinea la versione. Heredoc quotato:
+# nessuna interpolazione.
+cat > "$DIR/AGENTS.md" <<'AGENTS_EOF'
 # unportfolio — cartella dati
 
 Questa cartella è il database di **unportfolio**, un'app locale per net worth,
@@ -189,22 +194,32 @@ Dal repo sorgente: `npx vite-node scripts/prices.ts -- <cartella>`.
 - Dopo modifiche al ledger valida con `bean-check ledger/main.beancount`.
 - I prezzi si aggiornano col CLI, non a mano.
 AGENTS_EOF
-  echo "creato AGENTS.md"
-else
-  echo "esiste già AGENTS.md, non tocco"
-fi
+echo "aggiornato AGENTS.md"
 
 ABS_DIR=$(cd "$DIR" && pwd)
 if [ ! -f "$DIR/config.toml" ]; then
-  printf 'percorso_dati = "%s"\noperating_currency = "EUR"\ndefault_broker = "Directa"\npriorita = []\n\n[prezzi]\nanni = 2\nintervallo = "1wk"\n' "$ABS_DIR" > "$DIR/config.toml"
-  echo "creato config.toml (percorso annotato: $ABS_DIR)"
-elif ! grep -q '^percorso_dati' "$DIR/config.toml"; then
-  # prepend: una chiave top-level in coda finirebbe dentro [prezzi]
-  TMP=$(mktemp)
-  printf 'percorso_dati = "%s"\n' "$ABS_DIR" > "$TMP"
-  cat "$DIR/config.toml" >> "$TMP"
-  mv "$TMP" "$DIR/config.toml"
-  echo "annotato percorso in config.toml: $ABS_DIR"
+  printf 'formato_dati = %s\npercorso_dati = "%s"\noperating_currency = "EUR"\ndefault_broker = "Directa"\npriorita = []\n\n[prezzi]\nanni = 2\nintervallo = "1wk"\n' "$DATA_FORMAT" "$ABS_DIR" > "$DIR/config.toml"
+  echo "creato config.toml (formato v$DATA_FORMAT, percorso: $ABS_DIR)"
+else
+  # annota/aggiorna il marcatore di formato (chiave top-level, in testa: una
+  # chiave in coda finirebbe dentro [prezzi])
+  if grep -q '^formato_dati' "$DIR/config.toml"; then
+    sed -i.bak "s/^formato_dati.*/formato_dati = $DATA_FORMAT/" "$DIR/config.toml"
+    rm -f "$DIR/config.toml.bak"
+  else
+    TMP=$(mktemp)
+    printf 'formato_dati = %s\n' "$DATA_FORMAT" > "$TMP"
+    cat "$DIR/config.toml" >> "$TMP"
+    mv "$TMP" "$DIR/config.toml"
+  fi
+  echo "config.toml al formato v$DATA_FORMAT"
+  if ! grep -q '^percorso_dati' "$DIR/config.toml"; then
+    TMP=$(mktemp)
+    printf 'percorso_dati = "%s"\n' "$ABS_DIR" > "$TMP"
+    cat "$DIR/config.toml" >> "$TMP"
+    mv "$TMP" "$DIR/config.toml"
+    echo "annotato percorso in config.toml: $ABS_DIR"
+  fi
 fi
 
 echo ""

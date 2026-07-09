@@ -9,8 +9,10 @@ import {
   parseGoals,
   parseSnapshots,
   parseTargets,
+  serializeConfig,
   serializeSnapshots,
 } from "../../core/config/codecs";
+import { DATA_FORMAT, formatStatus, runMigrations, UNVERSIONED } from "../../core/config/format";
 import { missingAssetAccounts } from "../../core/config/reconcile";
 // (i codec per i salvataggi CRUD sono importati dinamicamente nelle funzioni)
 import { readCommodityInfo } from "../../core/derive/assets";
@@ -22,7 +24,7 @@ import type {
   RebalanceTarget,
   SnapshotEntry,
 } from "../../core/model/config";
-import { type DataFilePath, type DataStore, skeletonFiles } from "../fs/fileSystem";
+import { type DataFilePath, type DataStore, managedFiles, skeletonFiles } from "../fs/fileSystem";
 
 export interface AppState {
   version: number;
@@ -38,6 +40,10 @@ export interface AppState {
   config: AppConfig;
   /** live quotes fetched this session */
   quotes: Map<string, Decimal>;
+  /** versione del formato della cartella aperta (config.toml formato_dati) */
+  dataFormat: number;
+  /** formato sotto il minimo supportato: scritture bloccate finché non si migra */
+  formatBlocked: boolean;
   busy: boolean;
   notices: string[];
 }
@@ -65,6 +71,8 @@ let state: AppState = {
   targets: [],
   config: DEFAULT_CONFIG,
   quotes: new Map(),
+  dataFormat: DATA_FORMAT,
+  formatBlocked: false,
   busy: false,
   notices: [],
 };
@@ -145,13 +153,77 @@ export async function openStore(store: DataStore): Promise<void> {
       console.error("[unportfolio:fs] openStore: errore nel parsing dei file", e);
       throw new Error(`parsing dei file fallito: ${String(e)}`);
     }
-    emit({ store, files, ...parsed, busy: false });
+    // versionamento del formato: aggiorna in silenzio se indietro-ma-sicuro,
+    // blocca le scritture se sotto il minimo (l'utente migra dal banner rosso)
+    let dataFormat = parsed.config?.formatoDati ?? UNVERSIONED;
+    let formatBlocked = false;
+    const status = formatStatus(dataFormat);
+    if (status === "richiesto") {
+      formatBlocked = true;
+      console.warn(`[unportfolio:fs] formato v${dataFormat} sotto il minimo: scritture bloccate`);
+    } else if (status === "consigliato") {
+      await applyFormatUpgrade(store, files, dataFormat);
+      parsed = reparse(files);
+      dataFormat = parsed.config?.formatoDati ?? DATA_FORMAT;
+      console.debug(`[unportfolio:fs] formato aggiornato a v${dataFormat}`);
+    }
+    emit({ store, files, ...parsed, dataFormat, formatBlocked, busy: false });
     console.debug("[unportfolio:fs] openStore: store aperto");
-    await reconcileAssetAccounts();
+    if (!formatBlocked) await reconcileAssetAccounts();
   } catch (e) {
     console.error("[unportfolio:fs] openStore: errore", e);
     emit({ busy: false });
     notify(`errore apertura cartella: ${String(e)}`);
+  }
+}
+
+/**
+ * Porta la cartella al formato corrente, senza toccare i dati utente:
+ *  1. applica le migrazioni dati registrate (path→testo) da `from` a DATA_FORMAT;
+ *  2. riscrive i file gestiti (AGENTS.md) alla versione dell'app;
+ *  3. annota `formato_dati = DATA_FORMAT` in config.toml.
+ * Scrive su disco solo i file effettivamente cambiati (idempotente) e aggiorna
+ * la mappa `files` in place. Bypassa il blocco di writeFile: è l'upgrade stesso.
+ */
+async function applyFormatUpgrade(
+  store: DataStore,
+  files: AppState["files"],
+  from: number,
+): Promise<void> {
+  const textMap = new Map([...files].map(([p, f]) => [p, f.text] as const));
+  const { files: migrated } = runMigrations(textMap, from);
+  for (const [path, text] of managedFiles()) migrated.set(path, text);
+  const cfg = parseConfig(migrated.get("config.toml") ?? "");
+  cfg.formatoDati = DATA_FORMAT;
+  migrated.set("config.toml", serializeConfig(cfg));
+  for (const [path, text] of migrated) {
+    if (files.get(path)?.text === text) continue;
+    const lastModified = await store.write(path as DataFilePath, text);
+    files.set(path, { text, lastModified });
+  }
+}
+
+/**
+ * Migra la cartella aperta al formato corrente su richiesta (pulsante in
+ * Impostazioni o banner rosso "Correggi automaticamente"). È il fix automatico
+ * anche per le cartelle bloccate (formato sotto il minimo).
+ */
+export async function migrateStore(): Promise<boolean> {
+  const store = state.store;
+  if (!store) return false;
+  emit({ busy: true });
+  try {
+    const files = new Map(state.files);
+    await applyFormatUpgrade(store, files, state.dataFormat);
+    emit({ files, ...reparse(files), dataFormat: DATA_FORMAT, formatBlocked: false, busy: false });
+    notify(`cartella aggiornata al formato v${DATA_FORMAT}`);
+    await reconcileAssetAccounts();
+    return true;
+  } catch (e) {
+    console.error("[unportfolio:fs] migrateStore: errore", e);
+    emit({ busy: false });
+    notify(`errore aggiornamento cartella: ${String(e)}`);
+    return false;
   }
 }
 
@@ -200,6 +272,10 @@ export async function refreshFromDisk(): Promise<void> {
 export async function writeFile(path: DataFilePath, text: string): Promise<boolean> {
   const store = state.store;
   if (!store) return false;
+  if (state.formatBlocked) {
+    notify("formato dati non supportato: aggiorna la cartella prima di salvare");
+    return false;
+  }
   const known = state.files.get(path)?.lastModified;
   const onDisk = await store.stat(path);
   if (known !== undefined && onDisk !== undefined && onDisk !== known) {
@@ -389,6 +465,8 @@ export async function logout(): Promise<void> {
     targets: [],
     config: DEFAULT_CONFIG,
     quotes: new Map(),
+    dataFormat: DATA_FORMAT,
+    formatBlocked: false,
     busy: false,
     notices: [],
   };

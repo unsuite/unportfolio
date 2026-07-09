@@ -214,6 +214,19 @@ periodicita = "semestrale"
   });
 });
 
+describe("config formato_dati", () => {
+  it("round-trip preserva il marcatore di formato", () => {
+    const cfg = parseConfig(`operating_currency = "EUR"`);
+    cfg.formatoDati = 3;
+    expect(parseConfig(serializeConfig(cfg)).formatoDati).toBe(3);
+  });
+
+  it("assente resta assente (cartella pre-versionamento)", () => {
+    const cfg = parseConfig(`operating_currency = "EUR"`);
+    expect(parseConfig(serializeConfig(cfg)).formatoDati).toBeUndefined();
+  });
+});
+
 describe("targets.toml", () => {
   it("round-trip preserva peso e flag fisso/escluso", () => {
     const targets: RebalanceTarget[] = [

@@ -301,6 +301,8 @@ export function parseConfig(text: string): AppConfig {
       ? doc["pensione_portafogli"].map((p) => String(p))
       : [],
   };
+  const formato = asNumber(doc["formato_dati"]);
+  if (formato !== undefined) cfg.formatoDati = formato;
   const percorso = asString(doc["percorso_dati"]);
   if (percorso) cfg.percorsoDati = percorso;
   // [[pensione]] (array) o, per retro-compatibilità, [pensione] (tabella singola)
@@ -326,11 +328,12 @@ export function parseConfig(text: string): AppConfig {
 }
 
 export function serializeConfig(cfg: AppConfig): string {
-  const o: Record<string, unknown> = {
-    operating_currency: cfg.operatingCurrency,
-    default_broker: cfg.defaultBroker,
-    priorita: cfg.priorita,
-  };
+  const o: Record<string, unknown> = {};
+  // marcatore di formato in testa: chiave scalare, prima delle tabelle
+  if (cfg.formatoDati !== undefined) o["formato_dati"] = cfg.formatoDati;
+  o["operating_currency"] = cfg.operatingCurrency;
+  o["default_broker"] = cfg.defaultBroker;
+  o["priorita"] = cfg.priorita;
   // chiavi scalari/array-inline prima delle tabelle (smol-toml emette in ordine
   // di inserimento: una chiave top-level dopo una tabella finirebbe dentro)
   if (cfg.pensionePortafogli.length > 0) o["pensione_portafogli"] = cfg.pensionePortafogli;

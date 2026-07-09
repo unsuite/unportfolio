@@ -290,6 +290,16 @@ Dal repo sorgente: \`npx vite-node scripts/prices.ts -- <cartella>\`.
 - I prezzi si aggiornano col CLI, non a mano.
 `;
 
+/**
+ * File "gestiti" dall'app: contenuto generato, non dati utente. Vengono
+ * riscritti agli aggiornamenti di formato (vedi store.applyFormatUpgrade), così
+ * un AGENTS.md vecchio si allinea da solo. NON includere qui nulla che l'utente
+ * possa editare (patrimonio/goals/targets/snapshots/config): quello non si tocca.
+ */
+export function managedFiles(): Map<string, string> {
+  return new Map<string, string>([["AGENTS.md", AGENTS_MD]]);
+}
+
 /** Skeleton files for an empty data folder (AGENTS.md incluso). */
 export function skeletonFiles(): Map<string, string> {
   return new Map<string, string>([

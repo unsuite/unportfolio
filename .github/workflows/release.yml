@@ -1,0 +1,32 @@
+name: Release
+
+# Crea una GitHub Release quando pubblichi un tag vX.Y.Z:
+#   git tag v0.1.0 && git push origin v0.1.0
+# Le note vengono generate dai commit/PR dall'ultimo tag.
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Verifica che il tag combaci con package.json
+        run: |
+          PKG="v$(node -p "require('./package.json').version")"
+          if [ "$PKG" != "${{ github.ref_name }}" ]; then
+            echo "::error::tag ${{ github.ref_name }} ≠ package.json $PKG — allinea la version prima di taggare" >&2
+            exit 1
+          fi
+      - name: Crea la GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release create "${{ github.ref_name }}" --verify-tag --generate-notes

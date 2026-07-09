@@ -117,6 +117,9 @@ export interface NodoPos {
 }
 
 export interface AppConfig {
+  /** versione del formato della cartella dati (config.toml `formato_dati`);
+   *  assente = cartella pre-versionamento. Vedi core/config/format.ts */
+  formatoDati?: number;
   operatingCurrency: string;
   /** waterfall order of portfolios for Goal Status (fallback se non c'è il grafo) */
   priorita: string[];
