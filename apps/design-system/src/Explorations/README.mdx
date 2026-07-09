@@ -1,0 +1,26 @@
+import { Meta } from "@storybook/addon-docs/blocks";
+
+<Meta title="Explorations/README" />
+
+# Esplorazioni di design (issue #6)
+
+Direzioni visive **usa-e-getta** per scegliere l'identità del redesign
+([issue #6](https://github.com/unsuite/unportfolio/issues/6), skill `design-explore`).
+Non sono componenti di catalogo né token definitivi: si usano valori grezzi inline
+perché qui si sta *scegliendo* la palette e la tipografia. La direzione scelta si
+formalizza poi con `product-decision` e si porta nei token (`ui-tokens` + scope
+`[data-theme="dark"]`).
+
+Tutte partono dalla stessa tesi: **strumento privato per il patrimonio, il numero è
+il protagonista**. Tutte evitano di proposito i tre default AI (cream+serif,
+near-black+acid, broadsheet). Ogni pagina mostra: palette, tipografia e l'elemento
+firma (il *ledger header*).
+
+| Direzione | Tesi | Rischio |
+|---|---|---|
+| **A · Ledger strumentale** | Pannello scuro da strumento di precisione, ottone riservato al valore | Accento ottone al posto del blu di default |
+| **B · Carta e inchiostro** | Estratto conto chiaro e ordinato, grotesk + inchiostro teal | Tema chiaro per un'app oggi scura |
+| **C · Terminale quieto** | Radici plain-text/beancount rese calme, mono-forward, fosforo tenue | Densità mono può intimidire |
+
+Vale la pena valutarle **sia in light che in dark del viewer** e su mobile. Dopo la
+scelta, rimuovi le direzioni non selezionate.
