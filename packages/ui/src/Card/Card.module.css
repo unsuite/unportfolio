@@ -23,10 +23,11 @@
   border-color: var(--color-border);
 }
 
-/* Variant: panel (superficie piena) */
+/* Variant: panel (superficie piena, leggermente sollevata) */
 .panel {
   background-color: var(--color-surface);
   border-color: var(--color-border);
+  box-shadow: var(--shadow-sm);
 }
 
 /* Variant: subtle (superficie semitrasparente) */
