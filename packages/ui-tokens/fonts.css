@@ -1,11 +1,25 @@
 /**
- * Font stack di sistema (ADR-0006): nessun font remoto, coerente con l'app
- * local-first/offline. Definisce le famiglie come token riusabili.
+ * Famiglie di font come token (ADR-0006, PDR-0001 "Registro").
+ * Local-first/offline: nessun font remoto. Le famiglie di sistema danno un
+ * risultato pieno da subito; per più carattere si può bundlare un woff2 OFL
+ * self-hosted (resta offline) — vedi ./fonts/README.md.
+ *
+ * Ruoli (PDR-0001):
+ * - display → numero-protagonista e titoli (grotesk, peso 600, tracking stretto)
+ * - sans    → corpo del testo, alta leggibilità
+ * - mono    → dati, importi, righe conto/beancount (cifre tabellari)
  */
 :root {
+  /* Se bundli un grotesk OFL, aggiungi la sua @font-face in ./fonts/ e mettine
+   * il nome in testa a questo stack (es. "Registro Grotesk"). Finché non c'è,
+   * lo stack di sistema è già un neo-grotesque su ogni piattaforma. */
+  --font-display:
+    "Registro Grotesk", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial,
+    sans-serif;
   --font-sans:
     system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji",
     "Segoe UI Emoji";
   --font-mono:
-    ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
+    "Registro Mono", ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono",
+    monospace;
 }
