@@ -18,6 +18,8 @@ export function MovimentiView() {
   const [preview, setPreview] = useState<ImportPreview>();
   const [error, setError] = useState<string>();
   const [done, setDone] = useState(false);
+  // bumped per annullamento per resettare l'<input type=file> (non controllato)
+  const [resetKey, setResetKey] = useState(0);
 
   // il conto scelto deve esistere ancora (potrebbe essere stato eliminato)
   const selezione = s.config.depositi.some((d) => d.id === deposito) ? deposito : "";
@@ -50,6 +52,14 @@ export function MovimentiView() {
     } catch (e) {
       setError(String(e));
     }
+  }
+
+  function annulla() {
+    setFile(undefined);
+    setPreview(undefined);
+    setError(undefined);
+    setDone(false);
+    setResetKey((k) => k + 1);
   }
 
   async function confirm() {
@@ -157,10 +167,11 @@ export function MovimentiView() {
         ) : (
           <>
             <p className="mb-2 text-xs text-zinc-500">
-              Export movimenti Directa (.csv). I movimenti già presenti (stesso{" "}
-              <code>import-id</code>) vengono saltati: il re-import è idempotente.
+              Export movimenti Directa (.csv). I movimenti già presenti vengono riconosciuti per
+              data, riferimento ordine/protocollo e importo e saltati: il re-import è idempotente.
             </p>
             <input
+              key={resetKey}
               type="file"
               accept=".csv,.txt"
               onChange={(e) => onFile(e.target.files?.[0])}
@@ -194,7 +205,7 @@ export function MovimentiView() {
               </li>
               <li>
                 <span className="font-semibold text-zinc-400">{preview.instruments.length}</span>{" "}
-                strumenti nel registro
+                nuovi strumenti rilevati
               </li>
             </ul>
             {preview.warnings.length > 0 && (
@@ -204,13 +215,21 @@ export function MovimentiView() {
                 ))}
               </div>
             )}
-            <button
-              onClick={confirm}
-              disabled={preview.newTransactions.length === 0}
-              className="rounded bg-emerald-700 px-4 py-1.5 text-sm hover:bg-emerald-600 disabled:opacity-50"
-            >
-              Importa
-            </button>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={confirm}
+                disabled={preview.newTransactions.length === 0}
+                className="rounded bg-emerald-700 px-4 py-1.5 text-sm hover:bg-emerald-600 disabled:opacity-50"
+              >
+                Importa
+              </button>
+              <button
+                onClick={annulla}
+                className="rounded border border-zinc-700 px-4 py-1.5 text-sm text-zinc-300 hover:bg-zinc-800"
+              >
+                Annulla
+              </button>
+            </div>
           </div>
         )}
         {done && (
