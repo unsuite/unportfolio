@@ -26,6 +26,21 @@ jobs:
             echo "::error::tag ${{ github.ref_name }} ≠ package.json $PKG — allinea la version prima di taggare" >&2
             exit 1
           fi
+      # Gate CI: gli stessi check di ci.yml devono passare prima di pubblicare.
+      # Evita che un tag esca con lint/typecheck/test/build rotti (vedi 0.1.3).
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Lint + format (Biome)
+        run: npx biome ci .
+      - name: Typecheck
+        run: npx tsc -b
+      - name: Test
+        run: npx vitest run
+      - name: Build
+        run: npx vite build
       - name: Crea la GitHub Release
         env:
           GH_TOKEN: ${{ github.token }}
