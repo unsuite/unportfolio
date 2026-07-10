@@ -1,0 +1,78 @@
+/**
+ * Stili del LedgerHeader — consumano SOLO i token di @unportfolio/ui-tokens via
+ * var(--…) (ADR-0006, PDR-0001). Numero-protagonista in font display, etichetta
+ * e dati in mono, sottolineatura accent come firma.
+ */
+
+.root {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--space-6);
+  flex-wrap: wrap;
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  padding: var(--space-6);
+  color: var(--color-text);
+}
+
+.label {
+  font-family: var(--font-mono);
+  font-size: var(--font-size-xs);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--color-text-subtle);
+}
+
+.value {
+  font-family: var(--font-display);
+  font-size: var(--font-size-2xl);
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  line-height: 1.1;
+  font-variant-numeric: tabular-nums;
+  margin: var(--space-1) 0;
+}
+
+.rule {
+  height: 2px;
+  width: 64px;
+  border-radius: var(--radius-full);
+  background-color: var(--color-accent);
+}
+
+.sub {
+  margin-top: var(--space-2);
+  font-family: var(--font-mono);
+  font-size: var(--font-size-xs);
+  color: var(--color-text-muted);
+}
+
+.aside {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: var(--space-2);
+}
+
+.delta {
+  font-family: var(--font-mono);
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  border: 1px solid currentColor;
+  border-radius: var(--radius-full);
+  padding: var(--space-1) var(--space-3);
+}
+
+.positive {
+  color: var(--color-positive);
+}
+.negative {
+  color: var(--color-negative);
+}
+.neutral {
+  color: var(--color-text-muted);
+}

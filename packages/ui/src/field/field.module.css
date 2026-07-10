@@ -18,8 +18,8 @@
   font-size: var(--font-size-sm);
   line-height: 1.4;
   transition:
-    border-color 120ms ease,
-    background-color 120ms ease;
+    border-color var(--motion-fast) var(--ease-standard),
+    background-color var(--motion-fast) var(--ease-standard);
 }
 
 .field::placeholder {

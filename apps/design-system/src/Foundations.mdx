@@ -9,7 +9,15 @@ I valori qui sotto sono letti automaticamente dalle custom properties CSS di
 `@unportfolio/ui-tokens` (vedi i blocchi `@tokens` in `tokens.css`). Modifica i
 valori lì: questa pagina si aggiorna da sola.
 
+> **Tema.** I colori mostrati sono il tema **chiaro** ("carta"). Il tema **scuro**
+> ("terminale") vive nello scope `[data-theme="dark"]` e rimappa gli stessi token:
+> usa il selettore **Tema** nella toolbar per vedere ogni componente in entrambi
+> (PDR-0001).
+
 ## Colors
+
+I colori muted hanno **3 livelli** (`muted` forte → `subtle` → `faint`) per una
+gerarchia del testo non collassata.
 
 <DesignTokenDocBlock categoryName="Colors" viewType="card" />
 
@@ -32,3 +40,9 @@ token semantici: identità visiva, non stato. I componenti chart
 ## Typography
 
 <DesignTokenDocBlock categoryName="Typography" viewType="table" />
+
+## Elevation
+
+Ombre morbide per staccare le superfici; in tema scuro sono più profonde.
+
+<DesignTokenDocBlock categoryName="Elevation" viewType="table" />

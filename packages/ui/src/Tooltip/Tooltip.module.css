@@ -1,0 +1,48 @@
+/**
+ * Stili del Tooltip — consumano SOLO i token di @unportfolio/ui-tokens via
+ * var(--…) (ADR-0006). La bolla è invertita (fondo = testo, testo = fondo) per
+ * un contrasto forte; compare con una transizione che rispetta reduced-motion
+ * (durata dai token motion).
+ */
+
+.root {
+  position: relative;
+  display: inline-flex;
+}
+
+.bubble {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%) translateY(2px);
+  z-index: 20;
+  max-width: 220px;
+  width: max-content;
+  padding: var(--space-1) var(--space-2);
+  border-radius: var(--radius-sm);
+  background-color: var(--color-text);
+  color: var(--color-bg);
+  font-family: var(--font-sans);
+  font-size: var(--font-size-xs);
+  line-height: 1.35;
+  box-shadow: var(--shadow-md);
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition:
+    opacity var(--motion-fast) var(--ease-standard),
+    transform var(--motion-fast) var(--ease-standard);
+}
+
+.bubble[data-open] {
+  opacity: 1;
+  visibility: visible;
+  transform: translateX(-50%) translateY(0);
+}
+
+.top {
+  bottom: calc(100% + var(--space-1));
+}
+
+.bottom {
+  top: calc(100% + var(--space-1));
+}
