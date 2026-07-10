@@ -1,30 +1,25 @@
-# Font self-hosted (opzionale)
+# Font self-hosted
 
-Local-first/offline: **niente font remoti**. Le famiglie in `../fonts.css` usano lo
-stack di sistema, che è già un neo-grotesque su ogni piattaforma e rende bene da
-subito. Per dare più carattere al display (e cifre tabellari dedicate ai dati) si
-può **bundlare un woff2 con licenza aperta (OFL)** — resta offline perché il file
-vive nel repo, non viene scaricato a runtime.
+Local-first/offline: i font vivono **nel repo** e non si scaricano a runtime.
 
-## Come aggiungere una famiglia
+## Famiglia attuale — Geist (SIL OFL 1.1)
 
-1. Scarica i `.woff2` di un font **OFL** (es. display grotesk: _Space Grotesk_,
-   _Hanken Grotesk_, _Geist_; mono: _Geist Mono_, _JetBrains Mono_, _IBM Plex Mono_)
-   e mettili qui in `packages/ui-tokens/fonts/`.
-2. Aggiungi la `@font-face` in `../fonts.css`, es.:
+- `Geist-Variable.woff2` → token `--font-display` e `--font-sans` (nome famiglia
+  `"Registro Grotesk"`).
+- `GeistMono-Variable.woff2` → token `--font-mono` (nome famiglia `"Registro Mono"`),
+  per dati/importi/righe beancount con cifre tabellari.
+- `OFL.txt` → licenza (Copyright Vercel, in collaborazione con basement.studio). La
+  OFL richiede che il testo di licenza sia distribuito **insieme** ai font: non
+  rimuoverlo.
 
-   ```css
-   @font-face {
-     font-family: "Registro Grotesk";
-     src: url("./fonts/registro-grotesk.woff2") format("woff2");
-     font-weight: 400 700;
-     font-display: swap;
-   }
-   ```
+Sono file **variable** (un solo woff2 per famiglia copre tutti i pesi 100–900), ~70
+KB l'uno. Le `@font-face` sono in `../fonts.css`.
 
-3. Il nome famiglia (`"Registro Grotesk"` / `"Registro Mono"`) è già in testa agli
-   stack `--font-display` / `--font-mono`: appena la `@font-face` esiste, i token lo
-   usano; altrimenti ricadono sul sistema. Nessun cambel nei componenti.
+## Sostituire con un'altra famiglia OFL
 
-> Verifica sempre la **licenza** del font prima di committarlo (OFL consente il
-> self-hosting e la redistribuzione; molti font commerciali no).
+1. Scarica i `.woff2` (e la relativa licenza OFL) di un font **OFL** e mettili qui.
+2. Aggiorna `src:` nelle `@font-face` di `../fonts.css`. I nomi famiglia
+   (`"Registro Grotesk"` / `"Registro Mono"`) sono già in testa agli stack dei token:
+   cambiando solo la sorgente, i componenti non cambiano.
+3. Verifica sempre la licenza: OFL consente self-hosting e redistribuzione; molti
+   font commerciali no.

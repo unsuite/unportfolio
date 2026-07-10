@@ -1,24 +1,38 @@
 /**
  * Famiglie di font come token (ADR-0006, PDR-0001 "Registro").
- * Local-first/offline: nessun font remoto. Le famiglie di sistema danno un
- * risultato pieno da subito; per più carattere si può bundlare un woff2 OFL
- * self-hosted (resta offline) — vedi ./fonts/README.md.
+ * Local-first/offline: i font sono self-hosted (woff2 nel repo, ./fonts/), NON
+ * scaricati a runtime. Famiglia: Geist / Geist Mono (SIL OFL 1.1, vedi
+ * ./fonts/OFL.txt).
  *
  * Ruoli (PDR-0001):
  * - display → numero-protagonista e titoli (grotesk, peso 600, tracking stretto)
- * - sans    → corpo del testo, alta leggibilità
+ * - sans    → corpo del testo, alta leggibilità (stessa famiglia display)
  * - mono    → dati, importi, righe conto/beancount (cifre tabellari)
  */
+
+@font-face {
+  font-family: "Registro Grotesk";
+  src: url("./fonts/Geist-Variable.woff2") format("woff2");
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Registro Mono";
+  src: url("./fonts/GeistMono-Variable.woff2") format("woff2");
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
+
 :root {
-  /* Se bundli un grotesk OFL, aggiungi la sua @font-face in ./fonts/ e mettine
-   * il nome in testa a questo stack (es. "Registro Grotesk"). Finché non c'è,
-   * lo stack di sistema è già un neo-grotesque su ogni piattaforma. */
   --font-display:
     "Registro Grotesk", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial,
     sans-serif;
   --font-sans:
-    system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji",
-    "Segoe UI Emoji";
+    "Registro Grotesk", system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif,
+    "Apple Color Emoji", "Segoe UI Emoji";
   --font-mono:
     "Registro Mono", ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono",
     monospace;
