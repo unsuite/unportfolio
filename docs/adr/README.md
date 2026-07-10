@@ -15,6 +15,7 @@ relazionano alle raccomandazioni in [`../guidances/`](../guidances/README.md)).
 | [0006](./0006-design-system.md) | Design system | accepted |
 | [0007](./0007-product-and-reference-spaces.md) | Product-decision & reference spaces | accepted |
 | [0008](./0008-routing.md) | Routing | accepted |
+| [0009](./0009-import-deduplication.md) | Import deduplication | accepted |
 
 ## Scrivere un nuovo ADR
 

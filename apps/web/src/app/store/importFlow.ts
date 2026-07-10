@@ -4,7 +4,9 @@ import { directaImporter } from "@unportfolio/core/import/directa";
 import {
   buildAccountsDirectives,
   existingImportIds,
+  existingMovementKeys,
   mapMovimenti,
+  movementKey,
   provisionalInstrument,
 } from "@unportfolio/core/import/mapping";
 import type { ImporterPlugin, ImportFile } from "@unportfolio/core/import/types";
@@ -82,8 +84,24 @@ export function previewImport(file: ImportFile, deposito?: string): ImportPrevie
     defaultBroker: getState().config.defaultBroker,
     ...(deposito ? { deposito } : {}),
   });
-  const existing = existingImportIds(allDirectives());
-  const newTransactions = mapped.transactions.filter((t) => !existing.has(t.meta["import-id"]!));
+  // Dedupe re-imports: a movement is already present if its exact `import-id`
+  // is in the ledger (fast path, same app version) OR its broker-stable natural
+  // key still has an unconsumed occurrence (robust path, survives id drift — see
+  // movementKey/ADR-0009). Consume the natural-key occurrence in both cases so
+  // N ledger copies absorb exactly N incoming copies.
+  const dirs = allDirectives();
+  const existingIds = existingImportIds(dirs);
+  const remaining = existingMovementKeys(dirs);
+  const newTransactions = mapped.transactions.filter((t) => {
+    const key = movementKey(t);
+    const avail = remaining.get(key) ?? 0;
+    const isDuplicate = existingIds.has(t.meta["import-id"]!) || avail > 0;
+    if (isDuplicate) {
+      if (avail > 0) remaining.set(key, avail - 1);
+      return false;
+    }
+    return true;
+  });
   return {
     importer,
     newTransactions,

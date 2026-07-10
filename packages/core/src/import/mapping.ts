@@ -306,3 +306,40 @@ export function existingImportIds(directives: Directive[]): Set<string> {
   }
   return ids;
 }
+
+/**
+ * Broker-stable natural key for a movement, used to dedupe re-imports even when
+ * the `import-id` content hash drifts across app versions.
+ *
+ * `import-id` is fragile: it hashes fields (including `broker`) whose textual
+ * representation has changed over time, so ledgers written by older versions no
+ * longer match a fresh import and dedupe silently fails (broker "" → "Directa").
+ * This key uses only signals a broker export authors and that survive verbatim
+ * in the ledger: the operation date, the order/protocol reference, the cash
+ * amount, and the operation type (narration prefix). It is reconstructable both
+ * from a freshly-mapped transaction and from one already parsed out of the
+ * ledger, so the SAME function keys both sides. See ADR-0009.
+ */
+export function movementKey(t: TransactionDirective): string {
+  const ref = t.meta["ordine"] ?? t.meta["protocollo"] ?? "";
+  const cash = t.postings.find((p) => p.account.endsWith(":Cash"));
+  const amount = cash?.amount ? cash.amount.number.toString() : "";
+  const tipo = t.narration.split(" — ")[0] ?? t.narration;
+  return [t.date, ref, amount, tipo].join("|");
+}
+
+/**
+ * Multiset of natural keys already in a ledger, for idempotent re-imports.
+ * A multiset (count per key), not a set: Directa legitimately emits identical
+ * movements (e.g. the same coupon twice on one date), so N copies in the ledger
+ * must absorb exactly N incoming copies — no more, no fewer.
+ */
+export function existingMovementKeys(directives: Directive[]): Map<string, number> {
+  const counts = new Map<string, number>();
+  for (const d of directives) {
+    if (d.kind !== "transaction") continue;
+    const k = movementKey(d);
+    counts.set(k, (counts.get(k) ?? 0) + 1);
+  }
+  return counts;
+}
