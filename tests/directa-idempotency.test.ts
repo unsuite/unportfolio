@@ -56,9 +56,7 @@ function newAgainst(
 /** Simulate persistence: serialize to a ledger file and parse it back. */
 function roundTrip(txns: TransactionDirective[]): TransactionDirective[] {
   const text = txns.map((d) => formatDirective(d)).join("\n");
-  return parse(text).directives.filter(
-    (d): d is TransactionDirective => d.kind === "transaction",
-  );
+  return parse(text).directives.filter((d): d is TransactionDirective => d.kind === "transaction");
 }
 
 describe("Directa re-import idempotency", () => {
@@ -84,7 +82,7 @@ describe("Directa re-import idempotency", () => {
     expect(newAgainst(ledger, incoming)).toHaveLength(0);
   });
 
-  it("reproduces the broker \"\" → \"Directa\" drift that broke dedup", () => {
+  it('reproduces the broker "" → "Directa" drift that broke dedup', () => {
     // Rebuild a movement the way the pre-1.0 importer did (broker empty) and
     // confirm its import-id differs from today's while its natural key matches.
     const [m] = directaImporter.parse({ name: "x.csv", text: FIXTURE }).movimenti;
