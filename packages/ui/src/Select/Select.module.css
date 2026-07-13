@@ -1,0 +1,34 @@
+/**
+ * Stili della Select — incorpora la base condivisa dei campi
+ * (field/field.module.css) via `composes`, con appearance:none e un caret
+ * decorativo. Solo var(--token) (ADR-0006).
+ */
+
+.root {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+}
+
+.select {
+  composes: field from "../field/field.module.css";
+  appearance: none;
+  /* Spazio extra a destra per il caret decorativo. */
+  padding-right: var(--space-6);
+  cursor: pointer;
+  width: 100%;
+}
+
+/* La voce guida (placeholder) resta smorzata quando è selezionata. */
+.select:invalid {
+  color: var(--color-text-muted);
+}
+
+/* Caret decorativo: non intercetta il click, che passa al <select> sotto. */
+.caret {
+  position: absolute;
+  right: var(--space-2);
+  color: var(--color-text-muted);
+  font-size: var(--font-size-xs);
+  pointer-events: none;
+}

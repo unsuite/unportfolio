@@ -1,0 +1,137 @@
+/**
+ * Stili di InvestedValueChart — consumano SOLO i token di @unportfolio/ui-tokens
+ * via var(--…) (ADR-0006). Le due serie mappano su --chart-2 (valore) e
+ * --chart-3 (investito); crosshair e testo derivano dai token semantici. I
+ * numeri usano font-variant-numeric: tabular-nums (nessun token dedicato).
+ */
+
+.base {
+  font-family: var(--font-sans);
+  color: var(--color-text);
+}
+
+.base:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}
+
+.empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 176px;
+  margin: 0;
+  color: var(--color-text-muted);
+  font-size: var(--font-size-sm);
+}
+
+/* Legenda con swatch di colore */
+.legend {
+  display: flex;
+  gap: var(--space-4);
+  margin-bottom: var(--space-1);
+  font-size: var(--font-size-xs);
+  color: var(--color-text-muted);
+}
+
+.legendItem {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+}
+
+.swatch {
+  display: inline-block;
+  width: var(--space-3);
+  height: 2px;
+  border-radius: var(--radius-full);
+}
+
+.swatchValue {
+  background-color: var(--chart-2);
+}
+
+.swatchInvested {
+  background-color: var(--chart-3);
+}
+
+.plot {
+  position: relative;
+}
+
+.svg {
+  width: 100%;
+  display: block;
+}
+
+.lineValue {
+  stroke: var(--chart-2);
+}
+
+.lineInvested {
+  stroke: var(--chart-3);
+}
+
+.crosshair {
+  stroke: var(--color-text-muted);
+}
+
+.dotValue {
+  fill: var(--chart-2);
+  stroke: var(--color-bg);
+  stroke-width: 1;
+}
+
+.dotInvested {
+  fill: var(--chart-3);
+  stroke: var(--color-bg);
+  stroke-width: 1;
+}
+
+/* Tooltip multi-riga ancorato al crosshair */
+.tooltip {
+  position: absolute;
+  top: 0;
+  z-index: 10;
+  pointer-events: none;
+  white-space: nowrap;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background-color: color-mix(in srgb, var(--color-surface) 95%, transparent);
+  padding: var(--space-1) var(--space-2);
+  font-size: var(--font-size-xs);
+  box-shadow: 0 1px 3px color-mix(in srgb, var(--color-bg) 60%, transparent);
+}
+
+.tipLabel {
+  color: var(--color-text-muted);
+}
+
+.tipRow {
+  font-variant-numeric: tabular-nums;
+}
+
+.tipValue {
+  color: var(--chart-2);
+}
+
+.tipInvested {
+  color: var(--chart-3);
+}
+
+.tipGain {
+  color: var(--color-text);
+}
+
+.footer {
+  display: flex;
+  justify-content: space-between;
+  margin-top: var(--space-1);
+  font-size: var(--font-size-xs);
+  color: var(--color-text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.footerStrong {
+  color: var(--color-text);
+}

@@ -1,0 +1,29 @@
+/**
+ * Stili dell'HelpText — consumano SOLO i token di @unportfolio/ui-tokens via
+ * var(--…) (ADR-0006). Nessuno stato interattivo: è testo statico di caption.
+ */
+
+.base {
+  margin: 0;
+  font-family: var(--font-sans);
+  line-height: 1.4;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Sizes */
+.xs {
+  font-size: var(--font-size-xs);
+}
+.sm {
+  font-size: var(--font-size-sm);
+}
+
+/* Tone: muted (hint/caption neutra) */
+.muted {
+  color: var(--color-text-muted);
+}
+
+/* Tone: warning (avviso ambra) */
+.warning {
+  color: var(--color-warning);
+}

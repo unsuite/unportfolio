@@ -1,0 +1,60 @@
+/**
+ * Stili del FormField — consumano SOLO i token di @unportfolio/ui-tokens via
+ * var(--…) (ADR-0006). Nessuno stato hover/active proprio: il focus vive sul
+ * controllo figlio; qui solo layout e caption.
+ */
+
+.base {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  font-family: var(--font-sans);
+}
+
+/* Il <label> non aggiunge box: i suoi figli partecipano al layout del wrapper,
+ * mentre la hint resta un fratello fuori dal label. */
+.field {
+  display: contents;
+}
+
+.row {
+  display: flex;
+}
+
+/* Layout: stacked (caption sopra, controllo sotto) */
+.stacked .row {
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+/* Layout: inline (etichetta a sinistra, controllo a destra) */
+.inline .row {
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+.caption {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-muted);
+  line-height: 1.3;
+}
+
+.required {
+  margin-left: var(--space-1);
+  color: var(--color-negative);
+}
+
+.control {
+  display: flex;
+  flex-direction: column;
+}
+
+.inline .control {
+  align-items: flex-end;
+}
+
+.hint {
+  margin: 0;
+}

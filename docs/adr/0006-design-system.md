@@ -5,9 +5,9 @@
 
 La fondazione visiva condivisa di unportfolio: design token come CSS custom
 properties in `packages/ui-tokens`, una vetrina Storybook in `apps/design-system`,
-e l'integrazione con Tailwind 4. Questo ADR descrive decisioni che si
-concretizzeranno in un passo successivo: gli strumenti sono progettati adesso, il
-codice arriva quando la vetrina viene aggiunta.
+e l'integrazione con Tailwind 4. Le fondamenta (token + Storybook) sono in piedi; il
+catalogo di componenti condivisi `packages/ui` è ora **realizzato** (29 primitive
+presentazionali, una storia per componente) — vedi la sezione *Componenti condivisi*.
 
 ## Design token
 
@@ -26,6 +26,13 @@ formato intermedio.
 
 - I componenti referenziano i token via `var(--token-name)` e **non duplicano** mai
   i valori grezzi.
+- Oltre ai colori semantici c'è un token **`--color-info`** (azzurro, per notice e
+  azioni informative) e una **palette categorica** `--chart-1..8`, tenuta distinta
+  dai token semantici: i suoi valori non hanno significato di stato, solo identità
+  visiva, e i componenti chart la consumano ciclicamente.
+- Gli stati interattivi (hover/active) **non hanno token dedicati**: si derivano con
+  `color-mix()` di token esistenti (es. `color-mix(in srgb, var(--color-accent) 86%,
+  var(--color-text))`), così non si introducono valori grezzi.
 - La SPA (`apps/web`), Tailwind 4 e Storybook importano
   `@unportfolio/ui-tokens/tokens.css`.
 - Tailwind 4 consuma i token via `@theme` / `var(--…)`: i token restano la fonte,
@@ -122,3 +129,16 @@ vale per il catalogo condiviso `packages/ui`, non impone una migrazione dell'app
   componenti estratti.
 - − Nessuna parità automatica di classi con l'app: le varianti dei componenti vanno
   ricavate osservando gli usi reali nelle viste.
+
+### Stato
+
+Il catalogo è realizzato: `packages/ui` contiene 29 primitive presentazionali
+(controlli, display e i wrapper grafici/Modal normalizzati a props pure), ognuna con
+`<Nome>.tsx` + `<Nome>.module.css` + `<Nome>.stories.tsx` sotto `Components/`. Il
+confine di purezza è imposto due volte come per `packages/core`: override Biome
+`noRestrictedImports` su `packages/ui/**` + arch-test `assertLayerBoundaries`.
+
+Nota per il futuro ricablaggio: i token sono **light-first** mentre le viste di
+`apps/web` sono dark-hardcoded. Adottare i componenti nelle viste richiede prima lo
+scope tema scuro `[data-theme="dark"]` (previsto sopra), che rimappa i soli token
+semantici senza toccare i componenti.

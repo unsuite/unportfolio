@@ -1,0 +1,14 @@
+/**
+ * Stili del NumberInput — incorpora la base condivisa dei campi
+ * (field/field.module.css) via `composes` ed è numerico per natura (allineato
+ * a destra, cifre tabellari). Solo var(--token) (ADR-0006).
+ */
+
+.input {
+  composes: field numeric from "../field/field.module.css";
+}
+
+/* Stato: valore non valido (bordo negativo, mantenuto anche in hover) */
+.invalid {
+  composes: invalid from "../field/field.module.css";
+}

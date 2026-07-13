@@ -1,0 +1,99 @@
+/**
+ * Stili del LineChart — consumano SOLO i token di @unportfolio/ui-tokens via
+ * var(--…) (ADR-0006). La scala zinc delle viste dark-hardcoded e i colori hex
+ * (#10b981 …) sono tradotti ai token semantici; i numeri usano tabular-nums.
+ */
+
+.base {
+  position: relative;
+  font-family: var(--font-sans);
+}
+
+.svg {
+  width: 100%;
+  display: block;
+}
+
+/* Area sotto la linea: gradiente dal colore positivo verso il trasparente */
+.area {
+  fill: url(#unportfolio-linechart-area);
+}
+
+.areaStopTop {
+  stop-color: var(--color-positive);
+  stop-opacity: 0.25;
+}
+
+.areaStopBottom {
+  stop-color: var(--color-positive);
+  stop-opacity: 0;
+}
+
+.line {
+  fill: none;
+  stroke: var(--color-positive);
+  stroke-width: 1.5;
+}
+
+/* Zero-line (solo modalita pct) */
+.zeroLine {
+  stroke: var(--color-text-muted);
+  stroke-width: 0.75;
+}
+
+/* Crosshair verticale sotto il cursore */
+.crosshair {
+  stroke: var(--color-text-muted);
+  stroke-width: 0.75;
+}
+
+.dot {
+  fill: var(--color-positive);
+  stroke: var(--color-bg);
+  stroke-width: 1;
+}
+
+.tooltip {
+  position: absolute;
+  top: 0;
+  z-index: 10;
+  pointer-events: none;
+  white-space: nowrap;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background-color: var(--color-surface);
+  padding: var(--space-1) var(--space-2);
+  font-size: var(--font-size-xs);
+  box-shadow: 0 1px 2px color-mix(in srgb, var(--color-bg) 60%, transparent);
+}
+
+.tooltipLabel {
+  color: var(--color-text-muted);
+}
+
+.tooltipValue {
+  font-weight: 500;
+  color: var(--color-text);
+  font-variant-numeric: tabular-nums;
+}
+
+.footer,
+.footerMuted {
+  display: flex;
+  justify-content: space-between;
+  font-size: var(--font-size-xs);
+  font-variant-numeric: tabular-nums;
+}
+
+.footer {
+  color: var(--color-text-muted);
+}
+
+.footerStrong {
+  color: var(--color-text);
+}
+
+.footerMuted {
+  color: var(--color-text-muted);
+  opacity: 0.8;
+}

@@ -1,0 +1,47 @@
+/**
+ * Stili della StatTile — consumano SOLO i token di @unportfolio/ui-tokens via
+ * var(--…) (ADR-0006). Il tono colora il valore riusando i token semantici
+ * (positive/negative/muted); nessun token dedicato agli stati.
+ */
+
+.base {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  font-family: var(--font-sans);
+}
+
+.label {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-muted);
+  line-height: 1.2;
+}
+
+.value {
+  font-variant-numeric: tabular-nums;
+  color: var(--color-text);
+  line-height: 1.2;
+}
+
+/* Sizes */
+.sm .value {
+  font-size: var(--font-size-md);
+}
+.lg .value {
+  font-size: var(--font-size-lg);
+  font-weight: 600;
+}
+
+/* Toni: colorano il solo valore */
+.default {
+  color: var(--color-text);
+}
+.positive {
+  color: var(--color-positive);
+}
+.negative {
+  color: var(--color-negative);
+}
+.muted {
+  color: var(--color-text-muted);
+}

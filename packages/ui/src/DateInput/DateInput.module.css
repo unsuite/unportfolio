@@ -1,0 +1,19 @@
+/**
+ * Stili del DateInput — incorpora la base condivisa dei campi
+ * (field/field.module.css) via `composes`, con cifre tabellari. Solo
+ * var(--token) (ADR-0006).
+ */
+
+.base {
+  composes: field numeric from "../field/field.module.css";
+}
+
+/* Icona nativa del date-picker: la rendiamo leggibile sui fondi scuri. */
+.base::-webkit-calendar-picker-indicator {
+  cursor: pointer;
+  opacity: 0.7;
+}
+
+.base:not(:disabled)::-webkit-calendar-picker-indicator:hover {
+  opacity: 1;
+}

@@ -1,0 +1,18 @@
+/**
+ * Stili della Textarea — incorpora la base condivisa dei campi
+ * (field/field.module.css) via `composes`, con larghezza piena e resize
+ * verticale. Solo var(--token) (ADR-0006).
+ */
+
+.base {
+  composes: field from "../field/field.module.css";
+  display: block;
+  width: 100%;
+  resize: vertical;
+}
+
+/* Variante mono: note/blocchi tecnici, con cifre tabellari allineate. */
+.mono {
+  composes: mono from "../field/field.module.css";
+  font-variant-numeric: tabular-nums;
+}

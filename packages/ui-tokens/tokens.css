@@ -18,6 +18,26 @@
   --color-positive: #1f9d63;
   --color-negative: #d1435b;
   --color-warning: #c9820a;
+  --color-info: #2b8ad6;
+  /**
+   * @tokens-end
+   */
+
+  /**
+   * Palette categorica per grafici e swatch (allocazioni, gruppi). Distinta dai
+   * token semantici: i valori qui NON hanno significato di stato, solo identità
+   * visiva. I componenti chart la consumano ciclicamente.
+   * @tokens Chart
+   * @presenter Color
+   */
+  --chart-1: #2f6feb;
+  --chart-2: #1f9d63;
+  --chart-3: #c9820a;
+  --chart-4: #d1435b;
+  --chart-5: #7c5cdb;
+  --chart-6: #2bb0c4;
+  --chart-7: #d96a2b;
+  --chart-8: #8a9bb0;
   /**
    * @tokens-end
    */

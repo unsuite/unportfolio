@@ -1,0 +1,72 @@
+/**
+ * Stili dell'IconButton — consumano SOLO i token di @unportfolio/ui-tokens via
+ * var(--…) (ADR-0006). Gli stati hover/active, per cui non esistono token
+ * dedicati, si derivano con color-mix() di token esistenti.
+ */
+
+.base {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-1);
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  background-color: transparent;
+  font-family: var(--font-sans);
+  line-height: 1;
+  cursor: pointer;
+  transition:
+    background-color 120ms ease,
+    color 120ms ease,
+    opacity 120ms ease;
+}
+
+.base:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}
+
+.base:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Variant: ghost (icona neutra) */
+.ghost {
+  color: var(--color-text-muted);
+}
+.ghost:not(:disabled):hover {
+  background-color: color-mix(in srgb, var(--color-surface) 70%, var(--color-text));
+  color: var(--color-text);
+}
+
+/* Variant: danger (icona distruttiva) */
+.danger {
+  color: var(--color-text-muted);
+}
+.danger:not(:disabled):hover {
+  background-color: color-mix(in srgb, var(--color-negative) 12%, transparent);
+  color: var(--color-negative);
+}
+
+/*
+ * Rivelazione su hover: parte invisibile e diventa opaco quando un genitore
+ * con :hover / :focus-within lo scopre. Il focus da tastiera lo rende sempre
+ * visibile per non perdere l'azione.
+ */
+.revealOnHover {
+  opacity: 0;
+}
+.revealOnHover:focus-visible {
+  opacity: 1;
+}
+:hover > .revealOnHover,
+:focus-within > .revealOnHover {
+  opacity: 1;
+}
+
+.icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}

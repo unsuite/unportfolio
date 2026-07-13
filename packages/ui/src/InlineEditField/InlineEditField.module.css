@@ -1,0 +1,39 @@
+/**
+ * Stili dell'InlineEditField — consumano SOLO i token di @unportfolio/ui-tokens
+ * via var(--…) (ADR-0006). Il contenitore fa da genitore per la rivelazione su
+ * hover della matita (IconButton revealOnHover) sia col mouse sia col focus da
+ * tastiera (:focus-within). I numeri usano cifre tabellari.
+ */
+
+.base {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  max-width: 100%;
+  font-family: var(--font-sans);
+  font-size: var(--font-size-sm);
+  color: var(--color-text);
+}
+
+.label {
+  color: var(--color-text-muted);
+}
+
+.value {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.valueNumeric {
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+
+.suffix {
+  color: var(--color-text-muted);
+}
+
+.input {
+  min-width: 0;
+}

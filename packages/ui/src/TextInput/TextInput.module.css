@@ -1,0 +1,24 @@
+/**
+ * Stili del TextInput — incorpora la base condivisa dei campi
+ * (field/field.module.css) via `composes`, così resta identico agli altri
+ * controlli. Solo var(--token) (ADR-0006).
+ */
+
+.input {
+  composes: field from "../field/field.module.css";
+}
+
+/* Modificatore: numeric (importi/quantità allineati a destra) */
+.numeric {
+  composes: numeric from "../field/field.module.css";
+}
+
+/* Modificatore: mono (ISIN, ticker, hash) */
+.mono {
+  composes: mono from "../field/field.module.css";
+}
+
+/* Modificatore: invalid (bordo negativo, mantenuto anche in hover) */
+.invalid {
+  composes: invalid from "../field/field.module.css";
+}
